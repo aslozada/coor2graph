@@ -23,6 +23,18 @@ coord2graph uses the `networkx` python library. Required dependencies:
 * networkx
 * matplotlib
 
+#### Alternative
+Create an enviroment
+* In ubuntu
+```conda create --name myenvironment python=3```
+```conda activate myenviroment```
+
+to install required packages (if necessary): 
+```conda install <package-name>[=version]
+
+
+
+
 ### How to use?
 
 ### Basic use
