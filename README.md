@@ -40,4 +40,7 @@ to install required packages (if necessary):
 ### Basic use
 ```coor2graph --input <file>.gro --pure y --rcut # --cdistance #  --graph <prefix> --measure <function>```
 
+#### Example
+![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
+
 
