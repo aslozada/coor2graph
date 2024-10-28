@@ -17,7 +17,7 @@ cmake -B build -DBUILD_STATIC=ON
 make -C build
 ```
 
-coord2graph call the `networkx` python library. Required depedencies:
+coord2graph uses the `networkx` python library. Required depedencies:
 * numpy
 * pandas
 * networkx
