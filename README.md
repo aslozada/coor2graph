@@ -1,4 +1,4 @@
-(# coor2graph
+# coor2graph
 
 This software supports the build system CMake.
 
@@ -25,7 +25,7 @@ coord2graph call the `networkx` python library. Required depedencies:
 
 ### How to use?
 
-# Basic use
+### Basic use
 coor2graph --input <file>.gro --pure y --rcut # --cdistance #  --graph <prefix> --measure <function>
 
 
