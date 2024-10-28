@@ -10,7 +10,7 @@ This software supports the build system CMake.
 
 The CMake build system requires both make and CMake to be installed, the latter has to be version 3.30.3 or newer.
 
-Build `coor2graph` with CMake works with the following chain od commands:
+Build `coor2graph` with CMake works with the following chain of commands:
 
 ```bash
 cmake -B build -DBUILD_STATIC=ON
