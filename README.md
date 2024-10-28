@@ -30,7 +30,7 @@ Create an enviroment
 ```conda activate myenviroment```
 
 to install required packages (if necessary): 
-```conda install <package-name>[=version]
+```conda install <package-name>[=version]```
 
 
 
