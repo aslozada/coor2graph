@@ -336,7 +336,6 @@ contains
     check = .false.
     if(sa==pair(1) .and. sb==pair(2)) then
       if(sr2<=distance*distance) then
-              write(*,*) 'pair ', sa, sb, sr2, distance*distance
         current_cutoff = .true.
         check = .true.
       end if
