@@ -37,8 +37,22 @@ Create an enviroment
 to install required packages (if necessary): 
 ```conda install <package-name>[=version]```
 
-
-
+### GRO file format
+```
+MD of 9 ising spins, t= 0.0
+    9
+    1ISING  SP1    1   0.000   0.000   0.000  0.0000  0.0000  0.0000
+    2ISING  SP1    2   0.100   0.000   0.000  0.0000  0.0000  0.0000
+    3ISING  SP1    3   0.200   0.000   0.000  0.0000  0.0000  0.0000
+    4ISING  SP1    4   0.000   0.100   0.000  0.0000  0.0000  0.0000
+    5ISING  SP1    5   0.100   0.100   0.000  0.0000  0.0000  0.0000
+    6ISING  SP1    6   0.200   0.100   0.000  0.0000  0.0000  0.0000
+    7ISING  SP1    7   0.000   0.200   0.000  0.0000  0.0000  0.0000
+    8ISING  SP1    8   0.100   0.200   0.000  0.0000  0.0000  0.0000
+    9ISING  SP1    9   0.200   0.200   0.000  0.0000  0.0000  0.0000
+   0.40000   0.40000   0.40000
+```
+Positions (x,y,z) in nm
 
 ### How to use?
 
