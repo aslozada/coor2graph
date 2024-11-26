@@ -1,7 +1,6 @@
 module commands_module
   use kind_module
   use utils_module
-  use networkx_module
   implicit none
 
   private
@@ -9,29 +8,21 @@ module commands_module
   public :: commands
   public :: defaults
 
-  character(len=:), allocatable, public :: fileInput
-  character(1),                  public :: binary  ! Binary mixture
-  character(1),                  public :: pure    ! Pure substance
-  character(1),                  public :: with_pbc
-  character(1),                  public :: ising
-  real(wp), public     :: rcut    ! Cut-off radius
-  real(wp), public     :: cangle  ! three-body parameter 
-  real(wp), public     :: cdistance ! two-body parameter
-  character(5), public :: pair(2)   ! symbols for distance coputation
-  character(5), public :: triad(3)  ! symbols for angle computation
-  character(len=:), allocatable, public :: graph
-  character(len=:), allocatable, public :: measure
-  character(len=:), allocatable, public :: user
+  character(1),public :: pbc                      ! use periodical boundaries conditions
+  real(wp),public     :: rcut                     ! Cut-off radius
+  real(wp),public     :: angle                    ! three-body parameter 
+  real(wp),public     :: distance                 ! two-body parameter
+  character(5),public :: pair(2)                  ! symbols for distance coputation
+  character(5),public :: triad(3)                 ! symbols for angle computation
+  character(len=:),allocatable,public :: groFile  ! trajectory file in GRO format
+  character(len=:),allocatable,public :: graph    ! user-defined prefix of figure
+  character(len=:),allocatable,public :: measure  ! user-define measure passed to networks
 
-  ! bitmask
-  integer, public, parameter :: distance = 1   ! 000001 
-  integer, public, parameter :: angle    = 2   ! 000010
-  integer, public, parameter :: center   = 4   ! 000100
+  integer,public :: mode 
+  ! --pair  -> mode = 1
+  ! --triad -> mode = 2
 
-  ! mode
-  integer, public :: mode
-
-contains
+  contains
 
   subroutine commands()
     integer :: iarg
@@ -47,9 +38,11 @@ contains
     nargs = command_argument_count()
     if(nargs < 1) then
       write(*,hash)
-      write(*,'(a)') ' coor2graph builds adjacency matrix from coordinates file '
-      write(*,'(a)') ' try: coor2adj --help'
-      write(*,'(a)') ' Report bugs to: aslozada@gmail.com'
+      write(*,"('COOR2GRAPH - Software for build an adjacency matrix from a coordinate file' &
+                    &' and compute graph measure.', /&
+                    &' Try: coor2graph --help',/&
+                    & ' ',/&
+                    & 'Report bugs to: aslozada@gmail.com')")
       write(*,hash)
       stop
     end if
@@ -68,35 +61,20 @@ contains
        select case(opt)
          case('--input')
            call get_command_argument(iarg+1,buffer)
-           fileInput = trim(adjustl(buffer))
-         case('--pure')
-           call get_command_argument(iarg+1,buffer)
-           pure = trim(adjustl(buffer))
-           mode = 1
-         case('--binary')
-           call get_command_argument(iarg+1,buffer)
-           binary = trim(adjustl(buffer))
-           mode = 2
+           groFile = trim(adjustl(buffer))
          case('--rcut')
            call get_command_argument(iarg+1,buffer)
            Foo = trim(adjustl(buffer))
            read(Foo,*) rcut
-         case('--cdistance')
-           call get_command_argument(iarg+1,buffer)
-           Foo = trim(adjustl(buffer))
-           read(Foo,*) cdistance
-           mode = 6
-         case('--cangle')
-           call get_command_argument(iarg+1,buffer)
-           Foo = trim(adjustl(buffer))
-           read(Foo,*) cangle
-           mode = 3
          case('--pair')
            call get_command_argument(iarg+1,buffer)
            pair(1) = trim(adjustl(buffer))
            call get_command_argument(iarg+2,buffer)
            pair(2) = trim(adjustl(buffer))
-           mode =4
+           call get_command_argument(iarg+3,buffer)
+           Foo = trim(adjustl(buffer))
+           read(Foo,*) distance
+           mode = 1
          case('--triad')
            call get_command_argument(iarg+1,buffer)
            triad(1) = trim(adjustl(buffer))
@@ -104,9 +82,10 @@ contains
            triad(2) = trim(adjustl(buffer))
            call get_command_argument(iarg+3,buffer)
            triad(3) = trim(adjustl(buffer))
-           mode = 5
-         case('--help')
-           call help()
+           call get_command_argument(iarg+4,buffer)
+           Foo = trim(adjustl(buffer))
+           read(Foo,*) angle
+           mode = 2
          case('--graph')
            call get_command_argument(iarg+1,buffer)
            graph = trim(adjustl(buffer))
@@ -115,52 +94,55 @@ contains
            measure = trim(adjustl(buffer))
          case('--pbc') 
            call get_command_argument(iarg+1,buffer)
-           with_pbc = trim(adjustl(buffer))
-         case('--user') 
-           call get_command_argument(iarg+1,buffer)
-           user = trim(adjustl(buffer))
-         case('--ising')
-           call get_command_argument(iarg+1,buffer)
-           ising = trim(adjustl(buffer))
-           mode = 0
-         case default
-!           write(*,*) 'try: coor2adj --help'
-            mode = 0
-            write(*,*) 'Default mode: using ising-like model '
+           pbc = trim(adjustl(buffer))
+         case('--help')
+           call help()
+         case('--version')
+           call version()  
        end select
     end do
   end subroutine commands 
 
   subroutine help()
     write(*,hash)
-    write(*,'(a)') 'coor2adj [OPTIONS]'
-    write(*,'(a)') 'Example: coor2adj --input <coor>.gro --pure y --rcut 10.0 --pair O O --graph output.png --measure closenness'
+    write(*,'(a)') 'coor2graph [OPTIONS]'
+    write(*,'(a)') 'Example: coor2graph --input <coor>.gro --rcut <#> --pair&
+       & <sym1> <sym2> <distance> --graph <prefix> --measure <networkx measure>'
     write(*,'(a)') ''
     write(*,'(a)') 'Options:'
-    write(*,'(a)') '  --help'
-    write(*,'(a)') '  --input'
-    write(*,'(a)') '  --pure'
-    write(*,'(a)') '  --binary'
-    write(*,'(a)') '  --rcut'
-    write(*,'(a)') '  --cangle'
-    write(*,'(a)') '  --pair'
-    write(*,'(a)') '  --triad'
-    write(*,'(a)') '  --graph'
-    write(*,'(a)') '  --measure'
-    write(*,'(a)') '  --user'
-    write(*,'(a)') '  --ising'
+    write(*,'(a)') '  --help     | print the help'
+    write(*,'(a)') '  --version  | print the version'
+    write(*,'(a)') '  --input    | uses a GRO file [STR]'
+    write(*,'(a)') '  --rcut     | cut-off as float'
+    write(*,'(a)') '  --pair     | [sym1] [sym2] <distance>'
+    write(*,'(a)') '  --triad    | [sym1] [sym2] [sym3] <angle>'
+    write(*,'(a)') '  --graph    | prefix [STR]'
+    write(*,'(a)') '  --measure  | <networkx measure>'
+    write(*,'(a)') '  --pbc      | activate the periodical boudary conditions [y|n]'
     write(*,hash)
 
     stop
   end subroutine help 
 
+  subroutine version()
+    write(*,hash)
+    write(*,'(a)') 'COOR2GRAPH version 1.0.0'
+    write(*,'(a)') 'Copyright 2024 Asdrubal Lozada'
+    write(*,'(a)')''
+    write(*,'(a)')' License GPLv3+: GNU GPL version 3 or later &
+                    &<http://gnu.org/license/gpl.html>'
+    write(*,'(a)') 'Written by Asdrubal Lozada'        
+    write(*,'(a)') 'Report bugs to: aslozada@gmail.com'
+    write(*,hash)
+  end subroutine version
+
   subroutine defaults()
-    binary   = 'n'
-    pure     = 'y'
-    rcut     = 10.0_wp
-    cangle   = 0.0_wp
+    groFile  = ''
+    rcut     = 0.0_wp
+    distance = 0.0_wp
+    angle    = 0.0_wp
     pair(:)  = ''
     triad(:) = ''
-    with_pbc = 'y'
+    pbc      = 'n'
   end subroutine defaults
 end module commands_module

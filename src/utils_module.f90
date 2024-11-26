@@ -2,7 +2,7 @@ module utils_module
   use iso_fortran_env, only: output => output_unit
   implicit none
 
-  character(len=13), parameter :: hash="(  80('-') )"
+  character(len=13), parameter :: hash="(  100('-') )"
 
 contains
 

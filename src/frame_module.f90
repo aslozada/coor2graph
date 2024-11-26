@@ -30,36 +30,15 @@ module frame_module
   public :: get_groups
   !-------------------------------------------------
   character(5), allocatable :: molName(:), sym(:,:)
-  real(wp), allocatable :: rx(:), ry(:), rz(:)
-  real(wp), allocatable :: x(:,:), y(:,:), z(:,:)
-  integer, allocatable :: na(:)
+  real(wp), allocatable     :: rx(:), ry(:), rz(:)
+  real(wp), allocatable     :: x(:,:), y(:,:), z(:,:)
+  integer, allocatable      :: na(:)
   !-------------------------------------------------
   real(wp) :: rcut2
   integer, allocatable :: adj(:,:)
-
-  ! test ising
-  integer :: spin(10000,1)
-  integer :: id(10000)
-  !-----------------------------
-
-  ! ---- check ---
   logical :: check
 
 contains
-
-  subroutine read_user()
-    integer :: unit
-    logical :: is
-
-    unit = 80
-    inquire(unit=unit,opened=is)
-
-    do 
-       if(.not.is) exit
-       inquire(unit=unit,opened=is)
-       unit=unit+1
-    end do
-  end subroutine read_user      
 
   subroutine read_frame(me,unit)
     class(frame), intent(inout) :: me
@@ -97,19 +76,6 @@ contains
     real(wp) :: box(3)
 
     integer :: lines
-
-    ! ising test
-    integer :: sp(9)
-    integer :: iter5
-    
-    
-  !@  ! ising test
-     open(97,file='ising.dat',status='old')
-     do k = 1, 9
-        read(97,*) sp(k)
-     end do
-    !-----------------------------
-
 
     lines = 0
 
@@ -154,6 +120,7 @@ contains
          end if
        end do
     end do
+
     nmax = maxval(na)
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax),z(group_count,nmax))
@@ -167,19 +134,6 @@ contains
          read(unit,*) sym(k,n), x(k,n), y(k,n), z(k,n) 
        end do
     end do
-
-    iter5 = 1
-    do k = 1, group_count
-       id(k) = k
-       do n = 1, na(k)
-          spin(k,n) = sp(iter5)
-
-     !@     write(*,*) spin(k,n)
-          iter5 = iter5 + 1
-       end do
-    end do
-
-
 
     close(unit)
   end subroutine get_groups
@@ -198,13 +152,13 @@ contains
     real(wp) :: xe, ye, ze
     real(wp) :: xij, yij, zij
     real(wp) :: sr2
+    !
+    character(len=5) :: sa, sb, sc ! atomic symbols
 
     integer :: iter0, iter1
     logical :: current_cutoff 
 
     integer, intent(inout) :: unit
-
-    !----------------------------
 
     rcut2 = rcut * rcut
 
@@ -236,8 +190,8 @@ contains
           com(3) = rzij
 
           ! call pbc to pick up central image
-          if(with_pbc=='y') then
-            call pbc(com,box)
+          if(pbc=='y') then
+            call getpbc(com,box)
           end if  
           rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
@@ -250,39 +204,26 @@ contains
              ye = y(i,ie)
              ze = z(i,ie)
 
+             sa = sym(i,ie) ! first atomic symbol
+
              iter0 = iter0 + 1
              do ii = 1, na(j)
                 xij = (rxij + (xe - x(j,ii)))
                 yij = (ryij + (ye - y(j,ii)))
                 zij = (rzij + (ze - z(j,ii)))
+             
+                sb = sym(j,ii) ! second atomic symbol
+
                 iter1 = iter1 + 1
 
                 sr2 = xij*xij + yij*yij + zij*zij
 
                 if(sr2 <= rcut2) then
                   select case(mode)
-                    case(0)
-                      call ising_like(i,j,ie,ii,current_cutoff,check)
-                      if(check) exit
-                    case(1)  
-                    case(2)  
-                    case(3)  
-                    case(4)  
-                    case(5)  
-                    case(6)
-                      call distance_like(current_cutoff,sr2,check)
-                      if(check) exit
-                    case default
-                      call ising_like(i,j,ie,ii,current_cutoff,check)
-                      if(check) exit
+                    case(1)
+                    call pair_like(current_cutoff,sr2,check,sa,sb)
+                    if(check) exit
                   end select
-
-
-                  ! ising test
-                 !!  if(spin(j,ii) == spin(i,ie) )  then 
-                 !@@     current_cutoff = .true.
-              !@!       exit
-                 !!  end if
                 end if
              end do
              if(current_cutoff) exit
@@ -293,10 +234,6 @@ contains
             end if
        end do
     end do
-
-!@    do i = 1, group_count
-!@      write(*,*) (adj(i,j), j = 1, group_count)
-!@    end do
 
    !-------------------------------------------------------------
    ! Write CSV file
@@ -311,14 +248,14 @@ contains
 
   end subroutine adjacency_pure      
 
-  subroutine pbc(com,box)
+  subroutine getpbc(com,box)
     real(wp), intent(inout) :: com(:)
     real(wp), intent(inout) :: box(:)
 
     com(1) = com(1) - box(1) * dnint(com(1) / box(1))
     com(2) = com(2) - box(2) * dnint(com(2) / box(2))
     com(3) = com(3) - box(3) * dnint(com(3) / box(3))
-  end subroutine pbc
+  end subroutine getpbc
 
 !
   subroutine on_the_fly(me,unit)
@@ -369,8 +306,8 @@ contains
       open(unit2,file='adjacency.csv',status='unknown')
 
       call get_groups(me,unit1)
-      if(pure =='y') call adjacency_pure(me,unit2)
-      call build_script()
+      call adjacency_pure(me,unit2)
+      call build_script(nf)
 
       !@call execute_command_line('bin/python script.py output.png')
       write(ext,'(i10)') nf
@@ -391,46 +328,20 @@ contains
 
 !--------user-defined functions ----------------------
 
-!@  function only_distance()
-!@  end function only_distance
-
-!@  function only_angle()
-!@  end function only_angle  
-
-!@  function distance_angle()
-!@  end function distance_angle
-
-!@  function only_com()
-!@  end function only_com
-
-!@  function pair_atomic_labels()
-!@  end function pair_atomic_labels
-
-!@  function triad_atomic_labels()
-!@  end function triad_atomic_labels
-
-  ! Ising test
-  subroutine ising_like(i,j,ie,ii,current_cutoff,check)
-    integer, intent(in) :: i,j,ie,ii
-    logical, intent(inout) :: check
-    logical, intent(inout) :: current_cutoff
+  subroutine pair_like(current_cutoff,sr2,check,sa,sb)
+    logical,intent(inout) :: check
+    logical,intent(inout) :: current_cutoff
+    real(wp),intent(in)   :: sr2
+    character(*),intent(in) :: sa, sb
     check = .false.
-    if(spin(j,ii) == spin(i,ie)) then
-      current_cutoff = .true.
-      check = .true.
-    end if 
-  end subroutine ising_like
-
-  subroutine distance_like(current_cutoff,sr2,check)
-    logical, intent(inout) :: check
-    logical, intent(inout) :: current_cutoff
-    real(wp), intent(in)   :: sr2
-    check = .false.
-    if(sr2<=cdistance) then
-      current_cutoff = .true.
-      check = .true.
+    if(sa==pair(1) .and. sb==pair(2)) then
+      if(sr2<=distance*distance) then
+              write(*,*) 'pair ', sa, sb, sr2, distance*distance
+        current_cutoff = .true.
+        check = .true.
+      end if
     end if
-  end subroutine distance_like
+  end subroutine pair_like
 
 !--------end user-defined functions--------------------
 

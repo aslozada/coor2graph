@@ -7,15 +7,19 @@ module networkx_module
   public :: build_script
  contains
 
-    subroutine build_script()
+    subroutine build_script(nf)
       character(len=9), parameter :: fileScript  = 'script.py'
       character(len=13), parameter :: fileMatrix = 'adjacency.csv'  
       integer :: unit
+      integer, intent(in) :: nf
+      character(len=5) :: Foo
       
       ! test
       !call  openFile(unit,fileScript,2)
 
       unit = 33
+
+      write(Foo,'(i5)') nf
       open(unit,file=fileScript,status='unknown')
       ! python header
 
