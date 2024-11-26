@@ -60,6 +60,7 @@ Positions (x,y,z) and box(3) units in nm
 ```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure>```
 
 #### Example (Ising model)
+First-neighbor interaction
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
 
 #### Example (3-sites water model)
