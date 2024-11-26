@@ -1,6 +1,6 @@
 # coor2graph
 This software build an adjacency matrix from coordinate file. The coordinate file can be obtained from a molecular dynamics or stochastic simulation. 
-Using the adjacency matrix and the Python library NetworkX, this program enables the analysis of graphs or complex networks resulting from the molecular simulation.
+Using the adjacency matrix and the Python library Networkx, this program enables the analysis of graphs or complex networks resulting from the molecular simulation.
 Periodic boundary effects can be evaluated.
 
 
