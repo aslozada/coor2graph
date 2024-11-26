@@ -26,6 +26,7 @@ coord2graph uses the `networkx` python library. Required dependencies:
 * pandas
 * networkx
 * matplotlib
+* scipy (for large matrix)
 
 #### Alternative
 Create an enviroment
