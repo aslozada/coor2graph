@@ -38,7 +38,12 @@ to install required packages (if necessary):
 ### How to use?
 
 ### Basic use
-```coor2graph --input <file>.gro --pure y --rcut # --cdistance #  --graph <prefix> --measure <function>```
+```coor2graph --input <file>.gro --rcut <#> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure  with open(args.measure_type, 'w') as f:
+        f.write('Node\tmeasure\n')
+
+        for node, value in measures.items():
+            f.write(f'{node}\t{value:.4f}\n')
+>```
 
 #### Example
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
