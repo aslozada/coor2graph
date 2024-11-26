@@ -32,7 +32,7 @@ coord2graph uses the `networkx` python library. Required dependencies:
 Create an enviroment
 * In ubuntu
 ```conda create --name myenvironment python=3```
-```conda activate myenviroment```
+```conda activate myenvironment```
 
 to install required packages (if necessary): 
 ```conda install <package-name>[=version]```
