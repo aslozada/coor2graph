@@ -1,4 +1,8 @@
 # coor2graph
+This software build an adjacency matrix from coordinate file. The coordinate file can be obtained from a molecular dynamics or stochastic simulation. 
+Using the adjacency matrix and the Python library NetworkX, this program enables the analysis of graphs or complex networks resulting from the molecular simulation.
+Periodic boundary effects can be evaluated.
+
 
 This software supports the build system CMake.
 
@@ -38,7 +42,7 @@ to install required packages (if necessary):
 ### How to use?
 
 ### Basic use
-```coor2graph --input <file>.gro --rcut <#> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure>```
+```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure>```
 
 #### Example
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
