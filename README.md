@@ -52,7 +52,7 @@ MD of 9 ising spins, t= 0.0
     9ISING  SP1    9   0.200   0.200   0.000  0.0000  0.0000  0.0000
    0.40000   0.40000   0.40000
 ```
-Positions (x,y,z) in nm
+Positions (x,y,z) and box(3) units in nm
 
 ### How to use?
 
