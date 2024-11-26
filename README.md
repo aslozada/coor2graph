@@ -45,7 +45,12 @@ to install required packages (if necessary):
 ### Basic use
 ```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure>```
 
-#### Example
+#### Example (Ising model)
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
+
+#### Example (3-sites water model)
+![graphs](https://github.com/user-attachments/assets/c34049fb-dfe1-4a94-82e4-0a49088c6b3c)
+
+
 
 
