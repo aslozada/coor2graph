@@ -65,7 +65,8 @@ First-neighbor interaction
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
 
 #### Closeness 
-![prefix_1](https://github.com/user-attachments/assets/309ba906-9c5e-47b9-9ff7-b1a6b833ff19)
+![prefix_1](https://github.com/user-attachments/assets/56d2b87c-0d38-4e54-bbb4-07c52ec8ce49)
+
 
 
 #### Example (3-sites water model)
