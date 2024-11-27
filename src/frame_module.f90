@@ -273,6 +273,8 @@ contains
       end do
     end do
 
+    dss = .false.
+
    !-------------------------------------------------------------
    ! Write CSV file
     do i = 1, group_count
@@ -358,11 +360,119 @@ contains
       deallocate(molName,rx,ry,rz)
       deallocate(sym,x,y,z)
       deallocate(adj)
+      deallocate(dss)
+      deallocate(sites)
 
       write(*,*) '-----------------------------------'
     end do
 
+    call analysis_interface(nf)
+
   end subroutine on_the_fly
+
+!--------Analysis--------------------------------------  
+    subroutine analysis_interface(nf)
+      integer, intent(in) :: nf
+      character(len=:), allocatable :: results
+      character(len=:), allocatable :: input
+      integer :: n
+      character(5) :: Foo
+      integer :: unit1, unit2
+      integer :: ios
+      character(257) :: line
+      character(len=:), allocatable ::cmd
+
+      results = 'All_results.txt'
+
+      close(57)
+      open(unit=57,file=results,status='unknown')
+
+      do n = 1, nf-1
+        write(Foo,'(i5)') n
+        input = measure//"_"//trim(adjustl(Foo))//".txt"
+
+        close(56)
+        open(unit=56,file=input,status='old')
+       
+
+        do 
+          read(56,'(a)',iostat=ios) line
+          if(ios /= 0) exit
+          write(57,'(a)') trim(adjustl(line))
+        end do
+
+        close(56)
+      end do
+
+      do n = 1, nf-1
+        write(Foo,'(i5)') n
+        input = measure//"_"//trim(adjustl(Foo))//".txt"
+        cmd = "rm -r "//input
+
+        call execute_command_line(cmd)
+      end do
+
+      write(*,'(a)') "-------------------------"
+      write(*,'(a)') "COOR2GRAPH Version 1.0.0"
+      write(*,'(a)') ""
+      write(*,'(a)') measure//" of graph"
+      write(*,'(a)') "data save in:"
+      write(*,'(a)') "prefix_*.png"
+      write(*,'(a)') "histogram.png"
+      write(*,'(a)') "-------------------------"
+
+
+      ! ------------------------------------------------
+      close(93)
+      open(93,file='histogram.py',status='unknown')
+
+      write(93,'(a)')"import numpy as np"
+      write(93,'(a)')"import matplotlib.pyplot as plt"
+      write(93,'(a)')"import sys"
+      write(93,'(a)')"import os"
+      write(93,'(a)')""
+
+      write(93,'(a)')"file_name = 'All_results.txt'"
+      write(93,'(a)')"data = np.loadtxt(file_name, usecols=1)"
+      write(93,'(a)')""
+
+      write(93,'(a)')"average = np.mean(data)"
+      write(93,'(a)')"std_dev = np.std(data)"
+      write(93,'(a)')"print(f'Average: {average:.4f}')"
+      write(93,'(a)')"print(f'Standard Deviation: {std_dev:.4f}')"
+
+      write(93,'(a)')""
+!@      write(93,'(a)')"sys.stdout = open(os.devnull, 'w')"
+
+      write(93,'(a)')"data_size = len(data)"
+
+      write(93,'(a)')"bin_count=int(np.ceil(1 + np.log2(data_size)))"
+      write(93,'(a)')"hist, bin_edges = np.histogram(data, bins=bin_count)"
+      
+      write(93,'(a)')"print('Bin Start  Bin End  Frequency')"
+      write(93,'(a)')""
+
+      write(93,'(a)')"for start, end, freq in zip(bin_edges[:-1], bin_edges[1:], hist):"
+      write(93,'(a)')"    print(f'{start:10.4f} {end:10.4f} {freq:10d}')"
+      write(93,'(a)')""
+
+      write(93,'(a)')"plt.figure(figsize=(8,6))"
+      write(93,'(a)')"plt.hist(data, bins=bin_count, edgecolor='black', alpha=0.7)"
+      write(93,'(a)')"plt.title('Frequency of "//measure//"')"
+      write(93,'(a)')"plt.xlabel('Bins')"
+      write(93,'(a)')"plt.ylabel('Frequency')"
+      write(93,'(a)')"plt.grid(axis='y', linestyle='--', alpha=0.7)"
+      write(93,'(a)')"plt.tight_layout()"
+
+      write(93,'(a)')"plt.savefig('histogram.png')"
+      write(93,'(a)')"plt.show()"
+
+      cmd = "python histogram.py"
+      call execute_command_line(cmd)
+
+
+    end subroutine analysis_interface
+
 
 !--------user-defined functions ----------------------
 
@@ -372,6 +482,7 @@ contains
     real(wp),intent(in)   :: sr2
     character(*),intent(in) :: sa, sb
     check = .false.
+
     current_cutoff = .false.
     if(sa==pair(1) .and. sb==pair(2)) then
       if(sr2<=distance*distance) then

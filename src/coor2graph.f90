@@ -18,5 +18,6 @@ program main
   call openFile(unit,groFile,0)
 
   call on_the_fly(gro,unit)
+  
 
 end program main

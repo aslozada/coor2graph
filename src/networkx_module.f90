@@ -13,11 +13,14 @@ module networkx_module
       integer :: unit
       integer, intent(in) :: nf
       character(len=5) :: Foo
+      character(len=:), allocatable :: output
       
       ! test
       !call  openFile(unit,fileScript,2)
 
       unit = 33
+
+      output = ''
 
       write(Foo,'(i5)') nf
       open(unit,file=fileScript,status='unknown')
@@ -31,7 +34,13 @@ module networkx_module
       write(unit, '(A)') 'import networkx as nx'
       write(unit, '(A)') 'import matplotlib.pyplot as plt'
       write(unit, '(A)') 'import matplotlib.colors as mcolors'
+      write(unit, '(A)') 'import sys'
+      write(unit, '(A)') 'import os'
       write(unit, '(A)') ''
+      write(unit, '(A)')""
+      write(unit, '(A)')"sys.stdout = open(os.devnull, 'w')"
+      write(unit, '(A)')""
+
       write(unit, '(A)') 'def draw(G, pos, measures, measure_name, output_file):'
       write(unit, '(A)') '    nodes = nx.draw_networkx_nodes(G, pos, node_size=100, cmap=plt.cm.plasma,'
       write(unit, '(A)') '                               node_color=list(measures.values()),'
@@ -64,25 +73,50 @@ module networkx_module
       write(unit, '(A)') ''
       write(unit, '(A)') "    if args.measure_type == 'degree':"
       write(unit, '(A)') "        measures = nx.degree_centrality(G)"
-      write(unit, '(A)') "        print(measures)"
+      output = 'degree_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') ''
+!      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'closeness':"
       write(unit, '(A)') "        measures = nx.closeness_centrality(G)"
-      write(unit, '(A)') "        print(measures)"
+      output = 'closeness_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') ''
+ !     write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'betweenness':"
       write(unit, '(A)') "        measures = nx.betweenness_centrality(G)"
-      write(unit, '(A)') "        print(measures)"
+      output = 'betweenness_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') ''
+!      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'katz':"
       write(unit, '(A)') "        measures = nx.katz_centrality(G)"
-      write(unit, '(A)') "        print(measures)"
+      output = 'katz_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') ''
+!     write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'eigenvector':"
       write(unit, '(A)') "        measures = nx.eigenvector_centrality(G)"
-      write(unit, '(A)') "        print(measures)"
+      output = 'eigenvector_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
       write(unit, '(A)') ''
-      write(unit, '(A)') "    with open(args.measure_type, 'w') as f:"
-      write(unit, '(A)') "        f.write('Node\tmeasure\n')"
+!      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') ''
-      write(unit, '(A)') "        for node, value in measures.items():"
-      write(unit, '(A)') "            f.write(f'{node}\t{value:.4f}\n')"
+!@      write(unit, '(A)') "    with open(args.measure_type, 'w') as f:"
+!@      write(unit, '(A)') "        f.write('Node\tmeasure\n')"
+!@      write(unit, '(A)') ''
+!@      write(unit, '(A)') "        for node, value in measures.items():"
+!@      write(unit, '(A)') "            f.write(f'{node}\t{value:.4f}\n')"
       write(unit, '(A)') ''
       write(unit, '(A)') '    draw(G, pos, measures, args.measure_name, args.output_file)'
 
@@ -91,4 +125,5 @@ module networkx_module
 
 
     end subroutine build_script  
+
 end module networkx_module
