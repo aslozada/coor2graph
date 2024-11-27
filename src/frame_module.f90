@@ -33,10 +33,16 @@ module frame_module
   real(wp), allocatable     :: rx(:), ry(:), rz(:)
   real(wp), allocatable     :: x(:,:), y(:,:), z(:,:)
   integer, allocatable      :: na(:)
+
+  logical, allocatable      :: sites(:)
   !-------------------------------------------------
   real(wp) :: rcut2
   integer, allocatable :: adj(:,:)
   logical :: check
+
+  ! dmax value
+  real(wp) :: dmax
+  logical, allocatable, public :: dss(:,:,:,:)
 
 contains
 
@@ -76,6 +82,8 @@ contains
     real(wp) :: box(3)
 
     integer :: lines
+    real(wp) :: minimal_image
+
 
     lines = 0
 
@@ -124,9 +132,17 @@ contains
     nmax = maxval(na)
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax),z(group_count,nmax))
+    allocate(sites(nmax))
+    allocate(dss(nmax,nmax,group_count,group_count),source=.false.)
 
     rewind(unit)
     box(:) = me%box(:)
+
+    minimal_image = minval(box)
+    if(rcut > (minimal_image)/2.0_wp) then
+      write(*,'(a)') 'Check minimal image condition: rcut<= Lmin/2'
+      stop
+    end if
 
     do k = 1, group_count
        read(unit,*) molName(k), rx(k), ry(k), rz(k) 
@@ -137,6 +153,7 @@ contains
 
     close(unit)
   end subroutine get_groups
+
 
   subroutine adjacency_pure(me,unit)
     type(frame), intent(inout) :: me
@@ -152,6 +169,7 @@ contains
     real(wp) :: xe, ye, ze
     real(wp) :: xij, yij, zij
     real(wp) :: sr2
+
     !
     character(len=5) :: sa, sb, sc ! atomic symbols
 
@@ -159,6 +177,10 @@ contains
     logical :: current_cutoff 
 
     integer, intent(inout) :: unit
+
+    logical :: current
+    
+    current = .false.
 
     rcut2 = rcut * rcut
 
@@ -188,51 +210,67 @@ contains
           com(1) = rxij
           com(2) = ryij
           com(3) = rzij
+            
 
           ! call pbc to pick up central image
           if(pbc=='y') then
             call getpbc(com,box)
           end if  
-          rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
-          rxij = com(1)
-          ryij = com(2)
-          rzij = com(3)
+            rxij = com(1)
+            ryij = com(2)
+            rzij = com(3)
+            
 
-          do ie = 1, na(i)
-             xe = x(i,ie)
-             ye = y(i,ie)
-             ze = z(i,ie)
+            rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
-             sa = sym(i,ie) ! first atomic symbol
+          if(rijsq <= rcut2) then
+              
+              do ie = 1, na(i)
+                 xe = x(i,ie)
+                 ye = y(i,ie)
+                 ze = z(i,ie)
 
-             iter0 = iter0 + 1
-             do ii = 1, na(j)
-                xij = (rxij + (xe - x(j,ii)))
-                yij = (ryij + (ye - y(j,ii)))
-                zij = (rzij + (ze - z(j,ii)))
+                 sa = sym(i,ie) ! first atomic symbol
+
+                 iter0 = iter0 + 1
+                 do ii = 1, na(j)
+                    xij = (rxij + (xe - x(j,ii)))
+                    yij = (ryij + (ye - y(j,ii)))
+                    zij = (rzij + (ze - z(j,ii)))
              
-                sb = sym(j,ii) ! second atomic symbol
+                    sb = sym(j,ii) ! second atomic symbol
 
-                iter1 = iter1 + 1
+                    iter1 = iter1 + 1
 
-                sr2 = xij*xij + yij*yij + zij*zij
+                    sr2 = xij*xij + yij*yij + zij*zij
 
-                if(sr2 <= rcut2) then
-                  select case(mode)
-                    case(1)
-                    call pair_like(current_cutoff,sr2,check,sa,sb)
-                    if(check) exit
-                  end select
-                end if
-             end do
-             if(current_cutoff) exit
-          end do
-            if(current_cutoff) then
-              adj(i,j) = 1
-              adj(j,i) = 1
-            end if
-       end do
+                    if(sa == pair(1) .and. sb == pair(2)) then
+                      if(sr2 <= distance*distance) then
+                        dss(ie,ii,i,j) = .true.
+                      end if
+                    end if
+
+                 end do
+              end do
+
+         end if !> rcut   
+        end do
+    end do
+
+    do i = 1, group_count-1
+      do j = i+1, group_count
+         do ie = 1, na(i)
+           do ii = 1, na(j)
+             if(dss(ie,ii,i,j)) current = .true.
+           end do
+         end do
+         if(current) then
+           adj(i,j) = 1
+           adj(j,i) = 1
+         end if
+         current = .false.
+      end do
     end do
 
    !-------------------------------------------------------------
@@ -334,10 +372,11 @@ contains
     real(wp),intent(in)   :: sr2
     character(*),intent(in) :: sa, sb
     check = .false.
+    current_cutoff = .false.
     if(sa==pair(1) .and. sb==pair(2)) then
       if(sr2<=distance*distance) then
         current_cutoff = .true.
-        check = .true.
+!@        check = .true.
       end if
     end if
   end subroutine pair_like
