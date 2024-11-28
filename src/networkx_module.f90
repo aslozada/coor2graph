@@ -42,6 +42,14 @@ module networkx_module
       write(unit, '(A)')""
 
       write(unit, '(A)') 'def draw(G, pos, measures, measure_name, output_file):'
+
+   !   write(unit, '(A)') "    cbar = plt.colorbar(nodes)"
+   !   write(unit, '(A)') "    cbar.set_label('Measure Value')"  
+   !   write(unit, '(A)') "    cbar.ax.tick_params(labelsize=12)" 
+
+   !   write(unit, '(A)') "    cbar.ax.yaxis.set_tick_params(width=2)" 
+   !   write(unit, '(A)') "    cbar.ax.set_yticklabels([f'{tick:.2f}' for tick in cbar.get_ticks()])" 
+      write(unit, '(A)') '    plt.figure(figsize=(10,10))'
       write(unit, '(A)') '    nodes = nx.draw_networkx_nodes(G, pos, node_size=100, cmap=plt.cm.plasma,'
       write(unit, '(A)') '                               node_color=list(measures.values()),'
       write(unit, '(A)') '                               nodelist=measures.keys())'

@@ -17,6 +17,9 @@ module commands_module
   character(len=:),allocatable,public :: groFile  ! trajectory file in GRO format
   character(len=:),allocatable,public :: graph    ! user-defined prefix of figure
   character(len=:),allocatable,public :: measure  ! user-define measure passed to networks
+  !> Test mode used for fixed regular lattice models. Additional file(s) are required
+  character(1),public :: lattice  ! user-define lattice model (Ising-like)
+  character(len=:),allocatable,public :: txtFile  ! additional data
 
   integer,public :: mode 
   ! --pair  -> mode = 1
@@ -98,7 +101,12 @@ module commands_module
          case('--help')
            call help()
          case('--version')
-           call version()  
+           call version() 
+         case('--lattice') 
+           call get_command_argument(iarg+1,buffer)
+           lattice = trim(adjustl(buffer))
+           call get_command_argument(iarg+2,buffer)
+           txtFile = trim(adjustl(buffer))
        end select
     end do
   end subroutine commands 
@@ -119,6 +127,7 @@ module commands_module
     write(*,'(a)') '  --graph    | prefix [STR]'
     write(*,'(a)') '  --measure  | <networkx measure>'
     write(*,'(a)') '  --pbc      | activate the periodical boudary conditions [y|n]'
+    write(*,'(a)') '  --lattice  | this mode requires additional files <plain text (in progress)' 
     write(*,hash)
 
     stop
@@ -144,5 +153,7 @@ module commands_module
     pair(:)  = ''
     triad(:) = ''
     pbc      = 'n'
+    lattice  = 'n'
+    txtFile  = ''
   end subroutine defaults
 end module commands_module

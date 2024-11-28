@@ -465,7 +465,7 @@ contains
       write(93,'(a)')"plt.tight_layout()"
 
       write(93,'(a)')"plt.savefig('histogram.png')"
-      write(93,'(a)')"plt.show()"
+      !@write(93,'(a)')"plt.show()"
 
       cmd = "python histogram.py"
       call execute_command_line(cmd)
