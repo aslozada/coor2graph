@@ -3,6 +3,10 @@ This software build an adjacency matrix from coordinate file. The coordinate fil
 Using the adjacency matrix and the Python library Networkx, this program enables the analysis of graphs or complex networks resulting from the molecular simulation.
 Periodic boundary effects can be evaluated.
 
+* Options
+- [x] pair
+- [ ] triad
+- [ ] lattice
 
 This software supports the build system CMake.
 
