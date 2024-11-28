@@ -6,7 +6,8 @@ Periodic boundary effects can be evaluated.
 * Options
 - [x] pair
 - [ ] triad
-- [ ] lattice
+- [ ] 2D lattice
+- [ ] 3D lattice
 
 This software supports the build system CMake.
 
