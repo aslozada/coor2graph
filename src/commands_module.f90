@@ -18,12 +18,12 @@ module commands_module
   character(len=:),allocatable,public :: graph    ! user-defined prefix of figure
   character(len=:),allocatable,public :: measure  ! user-define measure passed to networks
   !> Test mode used for fixed regular lattice models. Additional file(s) are required
-  character(1),public :: lattice  ! user-define lattice model (Ising-like)
   character(len=:),allocatable,public :: txtFile  ! additional data
 
   integer,public :: mode 
-  ! --pair  -> mode = 1
-  ! --triad -> mode = 2
+  ! --pair    -> mode = 1
+  ! --triad   -> mode = 2
+  ! --lattice -> mode = 3
 
   contains
 
@@ -70,6 +70,7 @@ module commands_module
            Foo = trim(adjustl(buffer))
            read(Foo,*) rcut
          case('--pair')
+           mode = 1
            call get_command_argument(iarg+1,buffer)
            pair(1) = trim(adjustl(buffer))
            call get_command_argument(iarg+2,buffer)
@@ -77,8 +78,8 @@ module commands_module
            call get_command_argument(iarg+3,buffer)
            Foo = trim(adjustl(buffer))
            read(Foo,*) distance
-           mode = 1
          case('--triad')
+           mode = 2
            call get_command_argument(iarg+1,buffer)
            triad(1) = trim(adjustl(buffer))
            call get_command_argument(iarg+2,buffer)
@@ -88,7 +89,6 @@ module commands_module
            call get_command_argument(iarg+4,buffer)
            Foo = trim(adjustl(buffer))
            read(Foo,*) angle
-           mode = 2
          case('--graph')
            call get_command_argument(iarg+1,buffer)
            graph = trim(adjustl(buffer))
@@ -103,9 +103,8 @@ module commands_module
          case('--version')
            call version() 
          case('--lattice') 
+           mode = 3
            call get_command_argument(iarg+1,buffer)
-           lattice = trim(adjustl(buffer))
-           call get_command_argument(iarg+2,buffer)
            txtFile = trim(adjustl(buffer))
        end select
     end do
@@ -153,7 +152,6 @@ module commands_module
     pair(:)  = ''
     triad(:) = ''
     pbc      = 'n'
-    lattice  = 'n'
     txtFile  = ''
   end subroutine defaults
 end module commands_module

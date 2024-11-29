@@ -244,12 +244,31 @@ contains
                     iter1 = iter1 + 1
 
                     sr2 = xij*xij + yij*yij + zij*zij
-
-                    if(sa == pair(1) .and. sb == pair(2)) then
-                      if(sr2 <= distance*distance) then
-                        dss(ie,ii,i,j) = .true.
+                    
+                    ! TODO: like-distance function
+                    if(mode == 1) then
+                      if(sa == pair(1) .and. sb == pair(2)) then
+                        if(sr2 <= distance*distance) then
+                           dss(ie,ii,i,j) = .true.
+                        end if
                       end if
                     end if
+                    !--------------------------------------------
+                    !> TODO: like-angle function
+                    !>if(mode == 2) then
+                    !>  if(sa == triad(1) .and. sb == triad(2) .and. sc == trian(3)) then
+                    !>    if(turn <= angle) then
+                    !>       dss(ie,ii,i,j)
+                    !>    end if
+                    !>  end if
+                    !>end if
+                    !---------------------------------------------
+                    !> TODO: like-lattice function. This example suppose only two states
+                    !>if(mode == 3) then
+                    !>  if(spin(i,ie) == spin(j,ii)) then
+                    !>    dss(ie,ii,i,j)      
+                    !>  end if
+                    !>end if
 
                  end do
               end do
