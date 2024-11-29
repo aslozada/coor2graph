@@ -78,6 +78,10 @@ First-neighbor interaction
 #### Example (3-sites water model)
 ![graphs](https://github.com/user-attachments/assets/c34049fb-dfe1-4a94-82e4-0a49088c6b3c)
 
+#### Properties along a trajectory
+![histogram](https://github.com/user-attachments/assets/bc0c0655-ea7d-4162-ba48-a46713f79d65)
+
+
 
 
 
