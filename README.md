@@ -8,6 +8,7 @@ Periodic boundary effects can be evaluated.
 - [ ] triad
 - [ ] 2D lattice
 - [ ] 3D lattice
+- [ ] Non-cubic pbc
 
 This software supports the build system CMake.
 
