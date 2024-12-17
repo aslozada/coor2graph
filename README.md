@@ -82,9 +82,11 @@ First-neighbor interaction
 ![histogram](https://github.com/user-attachments/assets/bc0c0655-ea7d-4162-ba48-a46713f79d65)
 
 
-### PBC effects on centrality degree
-![w_pbc](https://github.com/user-attachments/assets/02b01ea4-9c4b-4088-ace0-6deb5fd967c1)
 
+### PBC effects on centrality degree
+(with pbc conditions)
+![wpbc_1](https://github.com/user-attachments/assets/a0b49eff-c0eb-4476-ae05-77bfb62f7a5d)
+(without obc conditions)
 ![woutpbc_1](https://github.com/user-attachments/assets/cd325594-ee55-47e8-9158-71a081fcd6ef)
 
 
