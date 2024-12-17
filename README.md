@@ -63,7 +63,7 @@ Positions (x,y,z) and box(3) units in nm
 ### How to use?
 
 ### Basic use
-```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure> frequency <y|n> <#|-1>```
+```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure> --frequency <y|n> <#|-1>```
 
 #### Example (Ising model)
 First-neighbor interaction
