@@ -68,6 +68,8 @@ module networkx_module
       write(unit, '(A)') "    parser.add_argument('measure_type', type=str, choices=['degree', 'closeness', 'betweenness', 'katz', 'eigenvector'])"
       write(unit, '(A)') "    parser.add_argument('measure_name', type=str)"
       write(unit, '(A)') '    parser.add_argument("output_file", type=str, help="Name of the file to save the image")'
+      write(unit, '(A)') '    parser.add_argument("active", type=str, help="init print graph (y|n)")'
+      write(unit, '(A)') '    parser.add_argument("frequency", type=str, help="define frequency to print graph")'
       write(unit, '(A)') ''
       write(unit, '(A)') '    args = parser.parse_args()'
       write(unit, '(A)') ''
@@ -126,7 +128,10 @@ module networkx_module
 !@      write(unit, '(A)') "        for node, value in measures.items():"
 !@      write(unit, '(A)') "            f.write(f'{node}\t{value:.4f}\n')"
       write(unit, '(A)') ''
-      write(unit, '(A)') '    draw(G, pos, measures, args.measure_name, args.output_file)'
+      write(unit, '(A)') "    if args.active == 'y':"
+      write(unit, '(A)') "         if args.frequency == 'y':"
+      write(unit, '(A)') '              draw(G, pos, measures, args.measure_name, args.output_file)'
+      write(unit, '(A)') ''
 
       ! Close the file
       close(unit)

@@ -19,6 +19,9 @@ module commands_module
   character(len=:),allocatable,public :: measure  ! user-define measure passed to networks
   !> Test mode used for fixed regular lattice models. Additional file(s) are required
   character(len=:),allocatable,public :: txtFile  ! additional data
+  !> Frequency to print graph
+  character(1), public :: active                  ! activate print the graph from networkx
+  integer, public :: frequency       
 
   integer,public :: mode 
   ! --pair    -> mode = 1
@@ -106,6 +109,13 @@ module commands_module
            mode = 3
            call get_command_argument(iarg+1,buffer)
            txtFile = trim(adjustl(buffer))
+         case('--frequency')
+           call get_command_argument(iarg+1,buffer)
+           active = trim(adjustl(buffer))
+           call get_command_argument(iarg+2,buffer)
+           Foo = trim(adjustl(buffer))
+           read(Foo,*) frequency
+
        end select
     end do
   end subroutine commands 
@@ -117,16 +127,18 @@ module commands_module
        & <sym1> <sym2> <distance> --graph <prefix> --measure <networkx measure>'
     write(*,'(a)') ''
     write(*,'(a)') 'Options:'
-    write(*,'(a)') '  --help     | print the help'
-    write(*,'(a)') '  --version  | print the version'
-    write(*,'(a)') '  --input    | uses a GRO file [STR]'
-    write(*,'(a)') '  --rcut     | cut-off as float'
-    write(*,'(a)') '  --pair     | [sym1] [sym2] <distance>'
-    write(*,'(a)') '  --triad    | [sym1] [sym2] [sym3] <angle>'
-    write(*,'(a)') '  --graph    | prefix [STR]'
-    write(*,'(a)') '  --measure  | <networkx measure>'
-    write(*,'(a)') '  --pbc      | activate the periodical boudary conditions [y|n]'
-    write(*,'(a)') '  --lattice  | this mode requires additional files <plain text (in progress)' 
+    write(*,'(a)') '  --help       | print the help'
+    write(*,'(a)') '  --version    | print the version'
+    write(*,'(a)') '  --input      | uses a GRO file [STR]'
+    write(*,'(a)') '  --rcut       | cut-off as float'
+    write(*,'(a)') '  --pair       | [sym1] [sym2] <distance>'
+    write(*,'(a)') '  --triad      | [sym1] [sym2] [sym3] <angle>'
+    write(*,'(a)') '  --graph      | prefix [STR]'
+    write(*,'(a)') '  --measure    | <networkx measure>'
+    write(*,'(a)') '  --pbc        | activate the periodical boudary conditions [y|n]'
+    write(*,'(a)') '  --lattice    | this mode requires additional files <plain text (in progress)' 
+    write(*,'(a)') '  --frequency  | [y/n] <-1> or <#> activate and define the number of graph figure ' 
+    write(*,'(a)') '               | if mod(nframes,frequency)==0 or frequency=-1 print graph, otherwise no'
     write(*,hash)
 
     stop
@@ -145,13 +157,15 @@ module commands_module
   end subroutine version
 
   subroutine defaults()
-    groFile  = ''
-    rcut     = 0.0_wp
-    distance = 0.0_wp
-    angle    = 0.0_wp
-    pair(:)  = ''
-    triad(:) = ''
-    pbc      = 'n'
-    txtFile  = ''
+    groFile   = ''
+    rcut      = 0.0_wp
+    distance  = 0.0_wp
+    angle     = 0.0_wp
+    pair(:)   = ''
+    triad(:)  = ''
+    pbc       = 'n'
+    txtFile   = ''
+    frequency = -1
+    active    = 'y'
   end subroutine defaults
 end module commands_module

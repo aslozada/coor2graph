@@ -323,17 +323,21 @@ contains
     ! local variables
     integer       :: lines, ios
     character(80) :: buffer
-    integer :: natoms, nf
+    integer :: natoms, nf, nf_cut
     integer :: unit1, unit2
     logical :: is
     character(10) :: ext
+    character(1)  :: show
 
     !---------------------------
 
     character(len=:), allocatable :: cmd
     !cmd = 'python script.py '//trim(adjustl(measure))//' '//'measure'//' '//trim(adjustl(graph))
 
+    show = 'n'
     lines = 0
+
+    write(*,*) 'flag = ', frequency
     do
        read(unit,'(a)',iostat=ios) buffer
        if(ios/=0) exit
@@ -348,6 +352,8 @@ contains
     rewind(unit)
     
     !unit2 = 10
+
+    nf_cut = 0
     
     do nf = 1, nframes
       close(unit2)
@@ -370,7 +376,17 @@ contains
 
       !@call execute_command_line('bin/python script.py output.png')
       write(ext,'(i10)') nf
-      cmd = 'python script.py '//trim(adjustl(measure))//' '//'measure'//' '//trim(adjustl(graph))//'_'//trim(adjustl(ext))//'.png'
+
+      if(mod(nf,frequency) == 0 .or. frequency == -1) then
+        show = 'y'
+      else
+        show = 'n'
+      end if
+
+      cmd = 'python script.py '//trim(adjustl(measure))//' '//'measure'//' '//&
+       &trim(adjustl(graph))//'_'//trim(adjustl(ext))//'.png'//' '//&
+       &trim(adjustl(active))//' '//trim(adjustl(show))
+        
       call execute_command_line(cmd)
 
       close(unit2)
@@ -385,7 +401,11 @@ contains
       write(*,*) '-----------------------------------'
     end do
 
-    call analysis_interface(nf)
+  !@  if(mod(nframes,frequency)==0) then
+  !@     call analysis_interface(nf_cut)
+  !@  else
+       call analysis_interface(nf)
+  !@  end if
 
   end subroutine on_the_fly
 
