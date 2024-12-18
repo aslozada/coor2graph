@@ -87,7 +87,7 @@ Positions (x,y,z) and box(3) units in nm
   flow_betweenness edge_flow_betweenness
 * Others
 
-harmonic_centrality | dispersion | laplacian
+  harmonic_centrality | dispersion | laplacian
 
 #### Example (Ising model)
 First-neighbor interaction
