@@ -65,6 +65,23 @@ Positions (x,y,z) and box(3) units in nm
 ### Basic use
 ```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure> --frequency <y|n> <#|-1>```
 
+### Currently avaliable graph measures (TODO)
+
+Degree centrality
+   degree | in_degree | out_degree
+Eigenvector centrality
+   eigenvector | katz
+Closeness centrality
+   closeness |incremental_closeness
+Current flow closeness
+   flow_centrality | information
+Short path (Betweenness)
+  betweenness | betweeness_subset | edge_betweenness
+Current flow betweenness
+  flow_betweenness edge_flow_betweenness
+Others
+harmonic_centrality | dispersion | laplacian
+
 #### Example (Ising model)
 First-neighbor interaction
 
