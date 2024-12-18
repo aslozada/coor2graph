@@ -68,18 +68,25 @@ Positions (x,y,z) and box(3) units in nm
 ### Currently avaliable graph measures (TODO) (Update from networkx.org)
 
 * Degree centrality
+  
    degree | in_degree | out_degree
 * Eigenvector centrality
+  
    eigenvector | katz
 * Closeness centrality
+  
    closeness |incremental_closeness
 * Current flow closeness
+  
    flow_centrality | information
 * Betweenness
+
   betweenness | betweeness_subset | edge_betweenness
 * Current flow betweenness
+
   flow_betweenness edge_flow_betweenness
 * Others
+
 harmonic_centrality | dispersion | laplacian
 
 #### Example (Ising model)
