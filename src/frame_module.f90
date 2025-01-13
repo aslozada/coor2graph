@@ -42,7 +42,6 @@ module frame_module
 
   ! dmax value
   real(wp) :: dmax
-  logical, allocatable, public :: dss(:,:,:,:)
 
 contains
 
@@ -133,7 +132,6 @@ contains
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax),z(group_count,nmax))
     allocate(sites(nmax))
-    allocate(dss(nmax,nmax,group_count,group_count),source=.false.)
 
     rewind(unit)
     box(:) = me%box(:)
@@ -179,6 +177,9 @@ contains
     integer, intent(inout) :: unit
 
     logical :: current
+
+    integer :: unit2
+    logical :: scalar_dss
     
     current = .false.
 
@@ -186,7 +187,7 @@ contains
 
     box(:) = me%box(:)
 
-    allocate(adj(me%natoms,me%natoms))
+    allocate(adj(group_count,group_count))
     adj = 0.0_wp
 
     iter0 = 0
@@ -249,7 +250,8 @@ contains
                     if(mode == 1) then
                       if(sa == pair(1) .and. sb == pair(2)) then
                         if(sr2 <= distance*distance) then
-                           dss(ie,ii,i,j) = .true.
+                           current = .true.
+                           exit
                         end if
                       end if
                     end if
@@ -271,28 +273,16 @@ contains
                     !>end if
 
                  end do
+                 if(current) exit
               end do
-
          end if !> rcut   
+        if(current) then
+          adj(i,j) = 1
+          adj(j,i) = 1
+        end if
+        current = .false.
         end do
     end do
-
-    do i = 1, group_count-1
-      do j = i+1, group_count
-         do ie = 1, na(i)
-           do ii = 1, na(j)
-             if(dss(ie,ii,i,j)) current = .true.
-           end do
-         end do
-         if(current) then
-           adj(i,j) = 1
-           adj(j,i) = 1
-         end if
-         current = .false.
-      end do
-    end do
-
-    dss = .false.
 
    !-------------------------------------------------------------
    ! Write CSV file
@@ -395,7 +385,7 @@ contains
       deallocate(molName,rx,ry,rz)
       deallocate(sym,x,y,z)
       deallocate(adj)
-      deallocate(dss)
+      !!@deallocate(dss)
       deallocate(sites)
 
       write(*,*) '-----------------------------------'
