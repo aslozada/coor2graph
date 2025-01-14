@@ -319,6 +319,10 @@ contains
     character(10) :: ext
     character(1)  :: show
 
+    !--------------------------
+    ! timing
+    real(wp) :: time_start
+    real(wp) :: time_finish
     !---------------------------
 
     character(len=:), allocatable :: cmd
@@ -327,7 +331,7 @@ contains
     show = 'n'
     lines = 0
 
-    write(*,*) 'flag = ', frequency
+    !@write(*,*) 'flag = ', frequency
     do
        read(unit,'(a)',iostat=ios) buffer
        if(ios/=0) exit
@@ -361,8 +365,19 @@ contains
       open(unit2,file='adjacency.csv',status='unknown')
 
       call get_groups(me,unit1)
+
+      !-----timing------------------
+      call cpu_time(time_start)
       call adjacency_pure(me,unit2)
+      call cpu_time(time_finish)
+      write(*,'("Time elapsed for building the adjacency matrix in frame&
+             & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
+      !-------------------------------
+      call cpu_time(time_start)
       call build_script(nf)
+      call cpu_time(time_finish)
+      write(*,'("Building script - Time elapsed in frame&
+             & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
 
       !@call execute_command_line('bin/python script.py output.png')
       write(ext,'(i10)') nf
@@ -373,11 +388,18 @@ contains
         show = 'n'
       end if
 
-      cmd = 'python script.py '//trim(adjustl(measure))//' '//'measure'//' '//&
+      cmd = 'time python script.py '//trim(adjustl(measure))//' '//'measure'//' '//&
        &trim(adjustl(graph))//'_'//trim(adjustl(ext))//'.png'//' '//&
        &trim(adjustl(active))//' '//trim(adjustl(show))
         
+      write(*,*) '-----------------------------------------'
+      write(*,'("Networkx - Time elapsed in frame&
+             & ",i0)') nf
+      !@call cpu_time(time_start)
       call execute_command_line(cmd)
+      !@call cpu_time(time_finish)
+      !@write(*,'("Networkx - Time elapsed in frame&
+      !@       & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
 
       close(unit2)
       deallocate(me%atoms)
