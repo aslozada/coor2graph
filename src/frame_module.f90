@@ -131,7 +131,7 @@ contains
     nmax = maxval(na)
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax),z(group_count,nmax))
-    allocate(sites(nmax))
+    !@allocate(sites(nmax))
 
     rewind(unit)
     box(:) = me%box(:)
@@ -386,7 +386,7 @@ contains
       deallocate(sym,x,y,z)
       deallocate(adj)
       !!@deallocate(dss)
-      deallocate(sites)
+      !@deallocate(sites)
 
       write(*,*) '-----------------------------------'
     end do
