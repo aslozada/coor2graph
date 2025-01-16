@@ -109,6 +109,9 @@ module commands_module
            mode = 3
            call get_command_argument(iarg+1,buffer)
            txtFile = trim(adjustl(buffer))
+           call get_command_argument(iarg+2,buffer)
+           Foo = trim(adjustl(buffer))
+           read(Foo,*) distance
          case('--frequency')
            call get_command_argument(iarg+1,buffer)
            active = trim(adjustl(buffer))
@@ -125,6 +128,8 @@ module commands_module
     write(*,'(a)') 'coor2graph [OPTIONS]'
     write(*,'(a)') 'Example: coor2graph --input <coor>.gro --rcut <#> --pair&
        & <sym1> <sym2> <distance> --graph <prefix> --measure <networkx measure>'
+    write(*,'(a)') '         coor2graph --input <coor>.gro --rcut <#> --lattice&
+       &<Propertie File> <distance> --graph <prefix> --measure <networkx measure>'
     write(*,'(a)') ''
     write(*,'(a)') 'Options:'
     write(*,'(a)') '  --help       | print the help'
@@ -137,6 +142,7 @@ module commands_module
     write(*,'(a)') '  --measure    | <networkx measure>'
     write(*,'(a)') '  --pbc        | activate the periodical boudary conditions [y|n]'
     write(*,'(a)') '  --lattice    | this mode requires additional files <plain text (in progress)' 
+    write(*,'(a)') '               | require a distance value'
     write(*,'(a)') '  --frequency  | [y/n] <-1> or <#> activate and define the number of graph figure ' 
     write(*,'(a)') '               | if mod(nframes,frequency)==0 or frequency=-1 print graph, otherwise no'
     write(*,hash)

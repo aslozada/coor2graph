@@ -43,6 +43,11 @@ module frame_module
   ! dmax value
   real(wp) :: dmax
 
+  !--------lattice mode----------
+   integer, allocatable :: tmp_spin(:)
+   integer, allocatable :: spin(:,:)
+  !------------------------------
+
 contains
 
   subroutine read_frame(me,unit)
@@ -67,6 +72,24 @@ contains
     read(unit,*) me%box(:)
   end subroutine read_frame
 
+  subroutine read_lattice(unit)
+    integer, intent(in) :: unit
+
+    integer :: n
+    integer :: nspins
+
+    read(unit,*) nspins
+
+    write(*,*) nspins
+
+    allocate(tmp_spin(nspins))
+
+    do n = 1, nspins
+       read(unit,*) tmp_spin(n)
+    end do
+    
+  end subroutine read_lattice
+
   subroutine get_groups(me,unit)
     type(frame), intent(inout) :: me
     integer, intent(in) :: unit
@@ -83,6 +106,9 @@ contains
     integer :: lines
     real(wp) :: minimal_image
 
+    integer :: unit2
+
+    integer :: iitera
 
     lines = 0
 
@@ -133,6 +159,19 @@ contains
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax)&
             &,z(group_count,nmax))
+
+    if(mode==3) then
+      iitera = 1
+    !------------lattice mode------------
+      allocate(spin(group_count,nmax))
+    !------------------------------------
+      do k = 1, group_count
+       do n = 1, na(k)
+          spin(k,n) = tmp_spin(iitera)
+          iitera = iitera+1
+       end do
+      end do
+    end if
     
     
     !!!@allocate(sites(nmax))
@@ -249,6 +288,8 @@ contains
                     iter1 = iter1 + 1
 
                     sr2 = xij*xij + yij*yij + zij*zij
+
+                    write(*,*) 'sr2 = ', sr2
                     
                     ! TODO: like-distance function
                     if(mode == 1) then
@@ -270,11 +311,18 @@ contains
                     !>end if
                     !---------------------------------------------
                     !> TODO: like-lattice function. This example suppose only two states
-                    !>if(mode == 3) then
-                    !>  if(spin(i,ie) == spin(j,ii)) then
-                    !>    dss(ie,ii,i,j)      
-                    !>  end if
-                    !>end if
+                    if(mode == 3) then
+                            write(*,*) 'is mode 3'
+                      if(sr2 <= distance*distance) then
+                        
+                        write(*,*) 'SR2 = ', sr2
+                        
+                        if(spin(i,ie) == spin(j,ii)) then
+                          current = .true.
+                          exit 
+                        end if      
+                      end if
+                    end if
 
                  end do
                  if(current) exit
@@ -311,15 +359,15 @@ contains
   end subroutine getpbc
 
 !
-  subroutine on_the_fly(me,unit)
+  subroutine on_the_fly(me,unit,unitT)
     type(frame), intent(inout) :: me
-    integer, intent(in) :: unit
+    integer, intent(in) :: unit, unitT
     ! local variables
     integer       :: lines, ios
     character(80) :: buffer
     integer :: natoms, nf, nf_cut
-    integer :: unit1, unit2
-    logical :: is
+    integer :: unit1, unit2, unit3
+    logical :: is, op
     character(10) :: ext
     character(1)  :: show
 
@@ -352,8 +400,17 @@ contains
     !unit2 = 10
 
     nf_cut = 0
-    
+
+    unit3 = 10
+
+
     do nf = 1, nframes
+
+      !----lattice mode----
+        if(mode==3) then
+          call read_lattice(unitT)
+        end if
+      !--------------------
       close(unit2)
       call me%read(unit)
       unit1 = nf+20
@@ -411,6 +468,9 @@ contains
       deallocate(molName,rx,ry,rz)
       deallocate(sym,x,y,z)
       deallocate(adj)
+      if(mode==3) then
+        deallocate(tmp_spin,spin)
+      end if
       !!@deallocate(dss)
       !@deallocate(sites)
 

@@ -11,13 +11,14 @@ program main
   use frame_module
   use networkx_module
 
-  integer :: unit
+  integer :: unit, unit2
   type(frame) :: gro
 
   call commands()
   call openFile(unit,groFile,0)
+  call openFile(unit2,txtFile,0)
 
-  call on_the_fly(gro,unit)
+  call on_the_fly(gro,unit,unit2)
   
 
 end program main
