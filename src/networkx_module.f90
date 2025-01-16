@@ -86,7 +86,7 @@ module networkx_module
       output = 'degree_'//trim(adjustl(Foo))//'.txt'
       write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
       write(unit, '(A)') "            for node, value in measures.items():"
-      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
 !      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'closeness':"
@@ -94,7 +94,7 @@ module networkx_module
       output = 'closeness_'//trim(adjustl(Foo))//'.txt'
       write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
       write(unit, '(A)') "            for node, value in measures.items():"
-      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
  !     write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'betweenness':"
@@ -102,7 +102,7 @@ module networkx_module
       output = 'betweenness_'//trim(adjustl(Foo))//'.txt'
       write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
       write(unit, '(A)') "            for node, value in measures.items():"
-      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
 !      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'katz':"
@@ -110,7 +110,7 @@ module networkx_module
       output = 'katz_'//trim(adjustl(Foo))//'.txt'
       write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
       write(unit, '(A)') "            for node, value in measures.items():"
-      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
 !     write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') "    elif args.measure_type == 'eigenvector':"
@@ -118,7 +118,7 @@ module networkx_module
       output = 'eigenvector_'//trim(adjustl(Foo))//'.txt'
       write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
       write(unit, '(A)') "            for node, value in measures.items():"
-      write(unit, '(A)') "                f.write(f'{node}\t{value:.4f}\n')"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
 !      write(unit, '(A)') "        print(measures)"
       write(unit, '(A)') ''

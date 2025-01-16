@@ -34,7 +34,7 @@ module frame_module
   real(wp), allocatable     :: x(:,:), y(:,:), z(:,:)
   integer, allocatable      :: na(:)
 
-  logical, allocatable      :: sites(:)
+  !@!@logical, allocatable      :: sites(:)
   !-------------------------------------------------
   real(wp) :: rcut2
   integer, allocatable :: adj(:,:)
@@ -131,7 +131,7 @@ contains
     nmax = maxval(na)
     allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
     allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax),z(group_count,nmax))
-    !@allocate(sites(nmax))
+    !!!@allocate(sites(nmax))
 
     rewind(unit)
     box(:) = me%box(:)
@@ -460,7 +460,7 @@ contains
         input = measure//"_"//trim(adjustl(Foo))//".txt"
         cmd = "rm -r "//input
 
-        call execute_command_line(cmd)
+       call execute_command_line(cmd)
       end do
 
       write(*,'(a)') "-------------------------"
