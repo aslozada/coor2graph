@@ -43,12 +43,6 @@ module networkx_module
 
       write(unit, '(A)') 'def draw(G, pos, measures, measure_name, output_file):'
 
-   !   write(unit, '(A)') "    cbar = plt.colorbar(nodes)"
-   !   write(unit, '(A)') "    cbar.set_label('Measure Value')"  
-   !   write(unit, '(A)') "    cbar.ax.tick_params(labelsize=12)" 
-
-   !   write(unit, '(A)') "    cbar.ax.yaxis.set_tick_params(width=2)" 
-   !   write(unit, '(A)') "    cbar.ax.set_yticklabels([f'{tick:.2f}' for tick in cbar.get_ticks()])" 
       write(unit, '(A)') '    plt.figure(figsize=(10,10))'
       write(unit, '(A)') '    nodes = nx.draw_networkx_nodes(G, pos, node_size=100, cmap=plt.cm.plasma,'
       write(unit, '(A)') '                               node_color=list(measures.values()),'
@@ -65,7 +59,8 @@ module networkx_module
       write(unit, '(A)') ''
       write(unit, '(A)') 'if __name__ == "__main__":'
       write(unit, '(A)') '    parser = argparse.ArgumentParser(description="Draw a network and save the image with a specified file name.")'
-      write(unit, '(A)') "    parser.add_argument('measure_type', type=str, choices=['degree', 'closeness', 'betweenness', 'katz', 'eigenvector'])"
+      write(unit, '(A)') "    parser.add_argument('measure_type', type=str,&
+      & choices=['degree', 'closeness', 'betweenness', 'katz', 'eigenvector', 'cluster', 'all'])"
       write(unit, '(A)') "    parser.add_argument('measure_name', type=str)"
       write(unit, '(A)') '    parser.add_argument("output_file", type=str, help="Name of the file to save the image")'
       write(unit, '(A)') '    parser.add_argument("active", type=str, help="init print graph (y|n)")'
@@ -121,7 +116,52 @@ module networkx_module
       write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
       write(unit, '(A)') ''
 !      write(unit, '(A)') "        print(measures)"
+!     write(unit, '(A)') "        print(measures)"
+      write(unit, '(A)') "    elif args.measure_type == 'cluster':"
+      write(unit, '(A)') "        measures = nx.triangles(G)"
+      output = 'cluster_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+!      write(unit, '(A)') "    print(measures)"
       write(unit, '(A)') ''
+      write(unit, '(A)') "    elif args.measure_type == 'all':"
+      write(unit, '(A)') "        measures = nx.triangles(G)"
+      output = 'all_cluster_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      write(unit, '(A)') "        measures = nx.degree_centrality(G)"
+      output = 'all_degree_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      write(unit, '(A)') "        measures = nx.closeness_centrality(G)"
+      output = 'all_closeness_'//trim(adjustl(Foo))//'.txt'
+      write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      write(unit, '(A)') "            for node, value in measures.items():"
+      write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      write(unit, '(A)') "    print(measures)"
+      write(unit, '(A)') ''
+      !write(unit, '(A)')"    elif args.measure_type == 'all':"
+      !write(unit, '(A)')"         measure = nx.degree_centrality(G)"
+      !output = 'degree_'//trim(adjustl(Foo))//'.txt'
+      !write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      !write(unit, '(A)') "            for node, value in measures.items():"
+      !write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      !write(unit, '(A)') ''
+      !write(unit, '(A)')"         measure = nx.closeness_centrality(G)"
+      !output = 'closeness_'//trim(adjustl(Foo))//'.txt'
+      !write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      !write(unit, '(A)') "            for node, value in measures.items():"
+      !write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      !write(unit, '(A)') ''
+      !write(unit, '(A)')"         measure = nx.triangles(G)"
+      !output = 'cluster_'//trim(adjustl(Foo))//'.txt'
+      !write(unit, '(A)') "        with open('"//output//"'"//", 'w') as f:"
+      !write(unit, '(A)') "            for node, value in measures.items():"
+      !write(unit, '(A)') "                f.write(f'{node}\t{value:.10f}\n')"
+      !write(unit, '(A)') ''
 !@      write(unit, '(A)') "    with open(args.measure_type, 'w') as f:"
 !@      write(unit, '(A)') "        f.write('Node\tmeasure\n')"
 !@      write(unit, '(A)') ''

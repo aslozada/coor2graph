@@ -288,8 +288,6 @@ contains
                     iter1 = iter1 + 1
 
                     sr2 = xij*xij + yij*yij + zij*zij
-
-                    write(*,*) 'sr2 = ', sr2
                     
                     ! TODO: like-distance function
                     if(mode == 1) then
@@ -312,11 +310,7 @@ contains
                     !---------------------------------------------
                     !> TODO: like-lattice function. This example suppose only two states
                     if(mode == 3) then
-                            write(*,*) 'is mode 3'
                       if(sr2 <= distance*distance) then
-                        
-                        write(*,*) 'SR2 = ', sr2
-                        
                         if(spin(i,ie) == spin(j,ii)) then
                           current = .true.
                           exit 
@@ -497,27 +491,34 @@ contains
       character(257) :: line
       character(len=:), allocatable ::cmd
 
-      results = 'All_results.txt'
+      character(len=:), allocatable :: input_degree
+      character(len=:), allocatable :: input_closeness
+      character(len=:), allocatable :: input_cluster
 
-      close(57)
-      open(unit=57,file=results,status='unknown')
+      ! TODO this code requires optimization
 
-      do n = 1, nf-1
-        write(Foo,'(i5)') n
-        input = measure//"_"//trim(adjustl(Foo))//".txt"
+      if(measure /= "all") then
+         results = 'All_results.txt'
 
-        close(56)
-        open(unit=56,file=input,status='old')
+         close(57)
+         open(unit=57,file=results,status='unknown')
+
+        do n = 1, nf-1
+           write(Foo,'(i5)') n
+           input = measure//"_"//trim(adjustl(Foo))//".txt"
+
+           close(56)
+           open(unit=56,file=input,status='old')
        
 
-        do 
-          read(56,'(a)',iostat=ios) line
-          if(ios /= 0) exit
-          write(57,'(a)') trim(adjustl(line))
-        end do
+          do 
+            read(56,'(a)',iostat=ios) line
+            if(ios /= 0) exit
+            write(57,'(a)') trim(adjustl(line))
+          end do
 
-        close(56)
-      end do
+          close(56)
+        end do
 
       do n = 1, nf-1
         write(Foo,'(i5)') n
@@ -526,6 +527,57 @@ contains
 
        call execute_command_line(cmd)
       end do
+
+
+      elseif(measure == "all") then
+
+        close(57)
+        close(58)
+        close(59)
+
+        open(59,file="All_cluster_results.txt",status="unknown")
+        open(58,file="All_closeness_results.txt",status="unknown")
+        open(57,file="All_degree_results.txt",status="unknown")
+
+        do n = 1, nf-1
+           write(Foo,'(i5)') n
+           input_degree = "all_degree"//"_"//trim(adjustl(Foo))//".txt"
+           input_closeness = "all_closeness"//"_"//trim(adjustl(Foo))//".txt"
+           input_cluster = "all_cluster"//"_"//trim(adjustl(Foo))//".txt"
+          
+           close(56)
+           close(55)
+           close(54)
+           
+           open(unit=54,file=input_degree,status='old')
+           open(unit=55,file=input_closeness,status='old')
+           open(unit=56,file=input_cluster,status='old')
+          
+           do 
+             read(54,'(a)',iostat=ios) line
+             if(ios /= 0) exit
+             write(57,'(a)') trim(adjustl(line))
+           end do
+           do 
+             read(55,'(a)',iostat=ios) line
+             if(ios /= 0) exit
+             write(58,'(a)') trim(adjustl(line))
+           end do
+           do 
+             read(56,'(a)',iostat=ios) line
+             if(ios /= 0) exit
+             write(59,'(a)') trim(adjustl(line))
+           end do
+
+           close(56)
+           close(55)
+           close(54)
+
+
+
+        end do
+
+      end if
 
       write(*,'(a)') "-------------------------"
       write(*,'(a)') "COOR2GRAPH Version 1.0.0"
@@ -537,9 +589,10 @@ contains
       write(*,'(a)') "-------------------------"
 
 
+      if(measure /= "all") then
       ! ------------------------------------------------
       close(93)
-      open(93,file='histogram.py',status='unknown')
+      open(93,file=trim(measure)//'histogram.py',status='unknown')
 
       write(93,'(a)')"import numpy as np"
       write(93,'(a)')"import matplotlib.pyplot as plt"
@@ -553,8 +606,8 @@ contains
 
       write(93,'(a)')"average = np.mean(data)"
       write(93,'(a)')"std_dev = np.std(data)"
-      write(93,'(a)')"print(f'Average: {average:.4f}')"
-      write(93,'(a)')"print(f'Standard Deviation: {std_dev:.4f}')"
+      write(93,'(a)')"print(f'Average: {average:.6f}')"
+      write(93,'(a)')"print(f'Standard Deviation: {std_dev:.6f}')"
 
       write(93,'(a)')""
 !@      write(93,'(a)')"sys.stdout = open(os.devnull, 'w')"
@@ -584,6 +637,60 @@ contains
 
       cmd = "python histogram.py"
       call execute_command_line(cmd)
+
+      elseif(measure == "all") then
+        close(93)
+        open(93,file=trim(measure)//'_histogram.py',status='unknown')
+
+      write(93,'(a)')"import numpy as np"
+      write(93,'(a)')"import matplotlib.pyplot as plt"
+      write(93,'(a)')"import sys"
+      write(93,'(a)')"import os"
+      write(93,'(a)')""
+
+        write(93,'(a)')"file_names=['All_degree_results.txt','All_closeness_results.txt','All_cluster_results.txt']"
+        write(93,'(a)')"for file_name in file_names:"
+        write(93,'(a)')"    try:"
+        write(93,'(a)')"        data = np.loadtxt(file_name,usecols=1)"
+        write(93,'(a)')"    except Exception as e:"
+        write(93,'(a)')"        print(f'Error {file_name}: {e}')"
+        write(93,'(a)')"        continue"
+        write(93,'(a)')""
+        write(93,'(a)')"    average = np.mean(data)"
+        write(93,'(a)')"    std_dev = np.std(data)"
+        write(93,'(a)')"    print(f'file: {file_name}')"
+        write(93,'(a)')"    print(f'Average: {average:.6f}')"
+        write(93,'(a)')"    print(f'std : {std_dev:.6f}\n')"
+        write(93,'(a)')""
+        write(93,'(a)')"    data_size = len(data)"
+        write(93,'(a)')"    bin_count = int(np.ceil(1 + np.log2(data_size)))"
+        write(93,'(a)')"    hist, bin_edges = np.histogram(data, bins=bin_count)"
+        write(93,'(a)')""
+        write(93,'(a)')"    print('Bin Start Bin End Frequency')"
+        write(93,'(a)')"    for start, end, freq in zip(bin_edges[:-1], bin_edges[1:], hist):"
+        write(93,'(a)')"        print(f'{start:10.4f} {end:10.4f} {freq:10d}')"
+        write(93,'(a)')""
+        write(93,'(a)')"    plt.figure(figsize=(8,6))"
+        write(93,'(a)')"    plt.hist(data, bins=bin_count, edgecolor='black', alpha=0.7)"
+        write(93,'(a)')"    plt.title(f'Histogram of {file_name}')"
+        write(93,'(a)')"    plt.xlabel('bins')"
+        write(93,'(a)')"    plt.ylabel('frequency')"
+        write(93,'(a)')"    plt.grid(axis='y', linestyle='--', alpha=0.7)"
+        write(93,'(a)')"    plt.tight_layout()"
+        write(93,'(a)')"    output_file = f'histogram_{os.path.splitext(file_name)[0]}.png'"
+        write(93,'(a)')"    plt.savefig(output_file)"
+        write(93,'(a)')"    print(f'Histogram save in {output_file}\n')"
+        write(93,'(a)')"    plt.close()"
+        
+
+        
+      cmd = "python all_histogram.py"
+      call execute_command_line(cmd)
+
+
+
+
+      end if
 
 
     end subroutine analysis_interface
