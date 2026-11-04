@@ -155,9 +155,13 @@ First-neighbor interaction
 
 ![lattice_model](https://github.com/user-attachments/assets/d167f95e-ea9a-4b8c-b741-99ee7b053892)
 
+#### Degree centrality
+2d Lennard-Jones fluid at NVT ensemble
+![degree](https://github.com/aslozada/coor2graph/blob/main/figure/degree_1.png)
+
+
 #### Closeness 
 ![prefix_1](https://github.com/user-attachments/assets/56d2b87c-0d38-4e54-bbb4-07c52ec8ce49)
-
 
 
 #### Example (3-sites water model)
