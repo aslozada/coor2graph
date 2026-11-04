@@ -161,7 +161,7 @@ First-neighbor interaction
   <img src="https://github.com/aslozada/coor2graph/blob/main/figure/degree_1.png" width="50%" alt="Degree centrality">
 </p>
 
-#### Closeness 
+#### Closeness centrality
 ![prefix_1](https://github.com/user-attachments/assets/56d2b87c-0d38-4e54-bbb4-07c52ec8ce49)
 
 
