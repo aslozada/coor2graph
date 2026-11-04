@@ -1,49 +1,138 @@
 # coor2graph
-This software build an adjacency matrix from coordinate file. The coordinate file can be obtained from a molecular dynamics or stochastic simulation. 
-Using the adjacency matrix and the Python library Networkx, this program enables the analysis of graphs or complex networks resulting from the molecular simulation.
-Periodic boundary effects can be evaluated.
 
-* Options
+**coor2graph** is a software tool for converting coordinate data into graph representations and performing graph analysis.
+
+It generates adjacency matrices from coordinate files obtained from molecular dynamics simulations, stochastic simulations, lattice models, and other sources. These matrices are subsequently used with the Python library [NetworkX](http://networkx.org/) to compute graph measures and analyze complex networks.
+
+The software also supports periodic boundary conditions (PBC), allowing their effects on graph connectivity and network measures to be investigated.
+
+
+## Features
+
+- Conversion of coordinate data into graph representations.
+- Generation of adjacency matrices based on interatomic or intersite distances.
+- Graph analysis using NetworkX.
+- Support for periodic boundary conditions.
+- Processing of coordinate trajectories.
+
+
+### Available Options
+
 - [x] pair
 - [ ] triad
 - [ ] 2D lattice
 - [ ] 3D lattice
 - [ ] Non-cubic pbc
 
-This software supports the build system CMake.
+## Requirements
 
-**Compilers**
-1. gfortran(<=14.2.1 20240805)
-2. ifort(<=2021.13.0 20240602)
+The software uses CMake as its build system.
 
-### CMake
+### Supported compilers
 
-The CMake build system requires both make and CMake to be installed, the latter has to be version 3.30.3 or newer.
+1. GNU Fortran (gfortran)
+2. Intel Fortran (ifort)
 
-Build `coor2graph` with CMake works with the following chain of commands:
+### Build system
+
+The build system requires CMake 3.30.3 or newer and GNU Make.
+
+To build `coorr2graph`, run:
 
 ```bash
 cmake -B build -DBUILD_STATIC=ON
 make -C build
 ```
 
-coord2graph uses the `networkx` python library. Required dependencies:
-* numpy
-* pandas
-* networkx
-* matplotlib
-* scipy (for large matrix)
+## Python depencies
 
-#### Alternative
-Create an enviroment
-* In ubuntu
-```conda create --name myenvironment python=3```
-```conda activate myenvironment```
+Graph analysis is performed using the Networrkx Python library.
 
-to install required packages (if necessary): 
-```conda install <package-name>[=version]```
+Required Python packages:
+- numpy
+- pandas
+- networks
+- matplotlib
+- scipy (form large matrix operations, when required)
+
+## Alternative: Pytnon environment
+A dedicated Conda environmenr can be created using:
+
+```bash
+conda create --name myenvironment pyhton=3
+conda activate myenvironment
+```
+
+
+## Graph measures
+
+Graph measures are computed using NetworkX.
+
+Currently considered graph measures include:
+
+- Degree centrality
+
+    degree
+    in_degree
+    out_degree
+
+- Eigenvector centrality
+
+    eigenvector
+    katz
+
+- Closeness centrality
+
+    closeness
+    incremental_closeness
+
+- Current-flow closeness
+
+    flow_centrality
+    information
+
+- Betweenness centrality
+
+    betweenness
+    betweenness_subset
+    edge_betweenness
+
+- Current-flow betweenness
+
+    flow_betweenness
+    edge_flow_betweenness
+
+- Other measures
+
+    harmonic_centrality
+    dispersion
+    laplacian
+
+
+### How to use?
+
+### Basic use
+```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>```
+
+If `--net` is set to `y`, the `process_all.py` script is executed to perform graph analysis using NetworkX.
+
+The following parameters are passed to the script:
+
+- `nframes`: Number of frames to process.
+- `ncores`: Number of CPU cores to use.
+- `measure_type`: Type of graph measure to compute.
+- `measure_name`: Name of the graph measure.
+- `draw_freq`: Frequency at which graphs are generated.
+
+These parameters can be provided interactively through standard input or read from a file using input redirection (`< filename`).
+
+### Basic use
+
+```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance> --net <y|n>```
+
 
 ### GRO file format
+
 ```
 MD of 9 ising spins, t= 0.0
     9
@@ -60,34 +149,6 @@ MD of 9 ising spins, t= 0.0
 ```
 Positions (x,y,z) and box(3) units in nm
 
-### How to use?
-
-### Basic use
-```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance>  --graph <prefix> --measure <networkx measure> --frequency <y|n> <#|-1>```
-
-### Currently avaliable graph measures (TODO) (Update from networkx.org)
-
-* Degree centrality
-  
-   degree | in_degree | out_degree
-* Eigenvector centrality
-  
-   eigenvector | katz
-* Closeness centrality
-  
-   closeness |incremental_closeness
-* Current flow closeness
-  
-   flow_centrality | information
-* Betweenness
-
-  betweenness | betweeness_subset | edge_betweenness
-* Current flow betweenness
-
-  flow_betweenness edge_flow_betweenness
-* Others
-
-  harmonic_centrality | dispersion | laplacian
 
 #### Example (Ising model)
 First-neighbor interaction
@@ -106,7 +167,6 @@ First-neighbor interaction
 ![histogram](https://github.com/user-attachments/assets/bc0c0655-ea7d-4162-ba48-a46713f79d65)
 
 
-
 ### PBC effects on centrality degree
 (with pbc conditions)
 ![wpbc_1](https://github.com/user-attachments/assets/a0b49eff-c0eb-4476-ae05-77bfb62f7a5d)
@@ -114,4 +174,3 @@ First-neighbor interaction
 ![woutpbc_1](https://github.com/user-attachments/assets/cd325594-ee55-47e8-9158-71a081fcd6ef)
 
 
-.
