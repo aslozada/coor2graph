@@ -37,7 +37,7 @@ The software uses CMake as its build system.
 
 The build system requires CMake 3.30.3 or newer and GNU Make.
 
-To build `coorr2graph`, run:
+To build `coor2graph`, run:
 
 ```bash
 cmake -B build -DBUILD_STATIC=ON
