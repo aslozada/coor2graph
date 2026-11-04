@@ -157,8 +157,9 @@ First-neighbor interaction
 
 #### Degree centrality
 2d Lennard-Jones fluid at NVT ensemble
-![degree](https://github.com/aslozada/coor2graph/blob/main/figure/degree_1.png)
-
+<p align="center">
+  <img src="https://github.com/aslozada/coor2graph/blob/main/figure/degree_1.png" width="50%" alt="Degree centrality">
+</p>
 
 #### Closeness 
 ![prefix_1](https://github.com/user-attachments/assets/56d2b87c-0d38-4e54-bbb4-07c52ec8ce49)
