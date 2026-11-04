@@ -123,12 +123,34 @@ The following parameters are passed to the script:
 - `measure_type`: Type of graph measure to compute.
 - `measure_name`: Name of the graph measure.
 - `draw_freq`: Frequency at which graphs are generated.
+- `shape_intervals`: Lists of symbols in graph 
 
-These parameters can be provided interactively through standard input or read from a file using input redirection (`< filename`).
+These parameters can be provided interactively through standard input or read from a file using input redirection (`< parameters_file`).
+
+In this example, 4,000 frames are analyzed along the trajectory using 6 processors. Betweenness centrality is computed, name_bwn is used
+as the output graph filename prefix, and a graph is saved every 20 trajectory frames. The file intervals.txt contains the symbols used in each
+subinterval
+```
+4000
+6
+betweenness
+name_bwn
+20
+intervals.txt
+```
+
+intervals.txt
+```o - circle --- ^ - trinangle --- s - square --- p - +```
+```
+0 1000 o
+1001 2000 ^
+2001 3000 s
+3001 4000 p
+```
 
 ### Basic use
 
-```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance> --net <y|n>```
+```coor2graph --input <file>.gro --rcut <#> --pbc <y|n> --pair <sym1> <sym2> <distance> --net <y|n> < parameters_file```
 
 
 ### GRO file format
