@@ -1,63 +1,61 @@
+!-------------------------------------------------------------------
+! This module is part of coor2graph
+!-------------------------------------------------------------------
+!> author: Asdrubal Lozada
+!  update: 4/11/2026
+!  license: GPL-v3 
+  
 module utils_module
-  use iso_fortran_env, only: output => output_unit
-  implicit none
 
-  character(len=13), parameter :: hash="(  100('-') )"
+use iso_fortran_env, only: error_unit
+implicit none
 
+private
+
+character(len=13), parameter :: hash="(  100('-') )"
+
+public :: hash, openFile, fail
 contains
 
-  ! status = old(0)-new(1)-nuknown(2)     
-
+  ! status = 'old', 'new', 'replace', 'scratch'  
   subroutine openFile(unit,buffer,status)
-    integer, intent(out)     :: unit
+    integer, intent(out)               :: unit
     character(*), intent(in), optional :: buffer 
-    integer, intent(in)      :: status
-    ! local variables
-    logical :: is
-    character(len=:), allocatable :: fileName
+    character(*), intent(in)           :: status
+    character(len=:), allocatable      :: name
+    integer :: ios
 
+    if (status == 'scratch') then
+        open(newunit=unit, status='scratch', iostat=ios)
+        if (ios /=0 ) call fail('cannot a open a scratch file')
+        return
+    end if
 
-    unit = 10
-    is = .false.
-    inquire(unit,opened=is)
-    do 
-       if(.not.is) exit
-       unit = unit + 1
-       inquire(unit,opened=is)
-    end do
-
-      if(status == 0) then
-        if(present(buffer)) then
-          fileName = trim(adjustl(buffer))
-
-          inquire(file=fileName,exist=is)
-          if(.not.is) then
-            write(output,'(a)') 'No such file: '//fileName
-            stop
-          else
-            write(output,'(a)') 'Using file: '//fileName     
-          end if
-        end if
-      end if
+    if (.not. present(buffer)) call fail('openFile: a file name is required')
+    name = trim(adjustl(buffer))
+    if (len(name) == 0) call fail('openFile: the file name is empty')
 
     select case(status)
-      case(0)
-         if(present(buffer)) then
-         open(unit,file=fileName,status='old')
-         end if
-      case(1) 
-         if(present(buffer)) then
-         open(unit,file=fileName,status='new')
-         end if
-      case(2)
-         if(present(buffer)) then
-         open(unit,file=fileName,status='unknown')
-         end if
-      case(3) 
-       open(unit,status='scratch')
+      case('old')
+         open(newunit=unit, file=name, status='old', action='read', iostat=ios)
+      case('new') 
+         open(newunit=unit, file=name, status='new', action='write', iostat=ios)
+      case('replace')
+         open(newunit=unit, file=name, status='replace', action='write', iostat=ios)
+      case default 
+         call fail('openFile: unknown status: '//status)
     end select
 
+    if(ios /= 0 ) call fail('cannot open the file: '//name)
+
   end subroutine openFile
+
+  subroutine fail(msg)
+    character(*), intent(in) :: msg
+    
+    write(error_unit,'(a)') 'coor2graph: error: '//msg
+    stop 1
+  end subroutine fail
 
           
 end module utils_module

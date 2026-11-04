@@ -1,3 +1,11 @@
+!-------------------------------------------------------------------
+! This module is part of coor2graph
+! Parse command-line arguments and set execution parameters
+!-------------------------------------------------------------------
+!> author: Asdrubal Lozada
+!  update: 4/11/2026
+!  license: GPL-v3 
+
 module commands_module
   use kind_module
   use utils_module
@@ -15,18 +23,20 @@ module commands_module
   character(5),public :: pair(2)                  ! symbols for distance coputation
   character(5),public :: triad(3)                 ! symbols for angle computation
   character(len=:),allocatable,public :: groFile  ! trajectory file in GRO format
-  character(len=:),allocatable,public :: graph    ! user-defined prefix of figure
-  character(len=:),allocatable,public :: measure  ! user-define measure passed to networks
+  character(5),public :: net                      ! activate graph mesure calculation
   !> Test mode used for fixed regular lattice models. Additional file(s) are required
   character(len=:),allocatable,public :: txtFile  ! additional data
-  !> Frequency to print graph
-  character(1), public :: active                  ! activate print the graph from networkx
-  integer, public :: frequency       
 
   integer,public :: mode 
   ! --pair    -> mode = 1
   ! --triad   -> mode = 2
   ! --lattice -> mode = 3
+
+  !> versioning
+  integer, parameter :: major = 1
+  integer, parameter :: minor = 0
+  integer, parameter :: patch = 1
+ 
 
   contains
 
@@ -37,20 +47,24 @@ module commands_module
     integer :: nargs
     character(len=:), allocatable :: opt
     character(len=:), allocatable :: Foo
+    integer :: ios
     
-    !
     call defaults()
 
     nargs = command_argument_count()
     if(nargs < 1) then
-      write(*,hash)
-      write(*,"('COOR2GRAPH - Software for build an adjacency matrix from a coordinate file' &
-                    &' and compute graph measure.', /&
-                    &' Try: coor2graph --help',/&
-                    & ' ',/&
-                    & 'Report bugs to: aslozada@gmail.com')")
-      write(*,hash)
-      stop
+     write(*,hash)
+
+     write(*,"('coor2graph - A software tool for converting coordinate data into graph representations',/&
+        & 'and performing graph analysis. It generates adjacency matrices from coordinates files',/&
+        & 'obtained from molecular dynamics simulations, stochastic simulations, lattices models',/&
+        & 'and other sources, and uses NetworkX to compute graph measures.', /&
+        & '',/&
+        & 'try: coor2graph --help',/&
+        & ' ',/&
+        & 'Report bugs to aslozada@gmail,.com')")
+     write(*,hash)
+     stop
     end if
 
     allocate(args(nargs))
@@ -60,19 +74,24 @@ module commands_module
        args(iarg) = buffer
     end do
 
-    ! parse command
-
-    do iarg = 1, nargs
+    iarg = 1
+    do while (iarg <= nargs)
        opt = trim(adjustl(args(iarg)))
        select case(opt)
          case('--input')
            call get_command_argument(iarg+1,buffer)
+           if(iarg+1 > nargs) call fail('missing value for --input')
            groFile = trim(adjustl(buffer))
+           iarg = iarg + 2
          case('--rcut')
            call get_command_argument(iarg+1,buffer)
            Foo = trim(adjustl(buffer))
-           read(Foo,*) rcut
+           if(iarg+1 > nargs) call fail('missing value for --rcut')
+           read(Foo,*,iostat=ios) rcut
+           if (ios /=0) call fail('invalid value for --rcut')
+           iarg = iarg + 2
          case('--pair')
+           if (iarg+3 > nargs) call fail('missing values for --pair')
            mode = 1
            call get_command_argument(iarg+1,buffer)
            pair(1) = trim(adjustl(buffer))
@@ -80,8 +99,11 @@ module commands_module
            pair(2) = trim(adjustl(buffer))
            call get_command_argument(iarg+3,buffer)
            Foo = trim(adjustl(buffer))
-           read(Foo,*) distance
+           read(Foo,*,iostat=ios) distance
+           if (ios /=0) call fail('invalid value for distance')
+           iarg = iarg + 4
          case('--triad')
+           if (iarg + 4 > nargs) call fail('missing values for --triad')
            mode = 2
            call get_command_argument(iarg+1,buffer)
            triad(1) = trim(adjustl(buffer))
@@ -91,31 +113,33 @@ module commands_module
            triad(3) = trim(adjustl(buffer))
            call get_command_argument(iarg+4,buffer)
            Foo = trim(adjustl(buffer))
-           read(Foo,*) angle
-         case('--graph')
-           call get_command_argument(iarg+1,buffer)
-           graph = trim(adjustl(buffer))
-         case('--measure')
-           call get_command_argument(iarg+1,buffer)
-           measure = trim(adjustl(buffer))
+           read(Foo,*,iostat=ios) angle
+           if (ios /=0) call fail('invalid value for angle')
+           iarg = iarg + 5
          case('--pbc') 
            call get_command_argument(iarg+1,buffer)
+           if (iarg + 1 > nargs) call fail('missing value for --pbc')
            pbc = trim(adjustl(buffer))
+           iarg = iarg + 2
          case('--help')
            call help()
+           stop
          case('--version')
            call version() 
+           stop
          case('--lattice') 
+           if (iarg+1 > nargs) call fail('missing arguments for --lattice')
            mode = 3
            call get_command_argument(iarg+1,buffer)
            txtFile = trim(adjustl(buffer))
-         case('--frequency')
+           iarg = iarg + 2
+         case('--net')
            call get_command_argument(iarg+1,buffer)
-           active = trim(adjustl(buffer))
-           call get_command_argument(iarg+2,buffer)
-           Foo = trim(adjustl(buffer))
-           read(Foo,*) frequency
-
+           if (iarg + 1 > nargs) call fail('missing value for --net') 
+           net = trim(adjustl(buffer))
+           iarg = iarg + 2 
+         case default 
+           call fail('unknown option: '//opt)     
        end select
     end do
   end subroutine commands 
@@ -124,21 +148,23 @@ module commands_module
     write(*,hash)
     write(*,'(a)') 'coor2graph [OPTIONS]'
     write(*,'(a)') 'Example: coor2graph --input <coor>.gro --rcut <#> --pair&
-       & <sym1> <sym2> <distance> --graph <prefix> --measure <networkx measure>'
+       & <sym1> <sym2> <distance>'
     write(*,'(a)') ''
     write(*,'(a)') 'Options:'
-    write(*,'(a)') '  --help       | print the help'
-    write(*,'(a)') '  --version    | print the version'
-    write(*,'(a)') '  --input      | uses a GRO file [STR]'
-    write(*,'(a)') '  --rcut       | cut-off as float'
+    write(*,'(a)') '  --help       | display this help message'
+    write(*,'(a)') '  --version    | display the version'
+    write(*,'(a)') '  --input      | uses a coordinates file [STR]'
+    write(*,'(a)') '  --rcut       | cutoff distance [FLOAT]'
     write(*,'(a)') '  --pair       | [sym1] [sym2] <distance>'
     write(*,'(a)') '  --triad      | [sym1] [sym2] [sym3] <angle>'
-    write(*,'(a)') '  --graph      | prefix [STR]'
-    write(*,'(a)') '  --measure    | <networkx measure>'
-    write(*,'(a)') '  --pbc        | activate the periodical boudary conditions [y|n]'
-    write(*,'(a)') '  --lattice    | this mode requires additional files <plain text (in progress)' 
-    write(*,'(a)') '  --frequency  | [y/n] <-1> or <#> activate and define the number of graph figure ' 
-    write(*,'(a)') '               | if mod(nframes,frequency)==0 or frequency=-1 print graph, otherwise no'
+    write(*,'(a)') '  --pbc        | enable or disable periodic boundary [y|n]'
+    write(*,'(a)') '  --lattice    | enable lattice mode (requires additional files)' 
+    write(*,'(a)') '  --net        | enable graph measure calculation (requires additonal files)' 
+
+    write(*,'(a)') ''
+    write(*,'(a)') 'options --net:'
+    write(*,'(a)') '               | ncores - nframes - measure_type - measure_name'
+
     write(*,hash)
 
     stop
@@ -146,10 +172,12 @@ module commands_module
 
   subroutine version()
     write(*,hash)
-    write(*,'(a)') 'COOR2GRAPH version 1.0.0'
-    write(*,'(a)') 'Copyright 2024 Asdrubal Lozada'
+
+    write(*,'("coor2graph version ",i0,".",i0,".",i0)') &
+    major, minor, patch
+    write(*,'(a)') 'Copyright 2024-2026 Asdrubal Lozada'
     write(*,'(a)')''
-    write(*,'(a)')' License GPLv3+: GNU GPL version 3 or later &
+    write(*,'(a)')'License GPLv3+: GNU GPL version 3 or later &
                     &<http://gnu.org/license/gpl.html>'
     write(*,'(a)') 'Written by Asdrubal Lozada'        
     write(*,'(a)') 'Report bugs to: aslozada@gmail.com'
@@ -165,7 +193,6 @@ module commands_module
     triad(:)  = ''
     pbc       = 'n'
     txtFile   = ''
-    frequency = -1
-    active    = 'y'
+    mode      = 0
   end subroutine defaults
 end module commands_module

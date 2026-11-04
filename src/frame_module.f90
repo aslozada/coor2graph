@@ -1,11 +1,22 @@
+!-------------------------------------------------------------------
+! This module is part of coor2graph
+! Frame and trajectory processing, group identification, and adjacency matrix construction from coordinate data
+!-------------------------------------------------------------------
+!> author: Asdrubal Lozada
+!  update: 4/11/2026
+!  license: GPL-v3 
+
 module frame_module
   use kind_module
   use utils_module
   use commands_module
-  use networkx_module
   implicit none
 
   private
+
+  type, public :: atom_properties
+    real(wp), allocatable :: values(:)
+  end type atom_properties
 
   type, public :: atom
     integer      :: index
@@ -13,6 +24,7 @@ module frame_module
     character(5) :: sym
     integer      :: seq
     real(wp)     :: xyz(3)
+    type(atom_properties) :: properties
   end type atom
 
   type, public :: frame
@@ -24,7 +36,7 @@ module frame_module
   end type frame
 
   integer, public :: nframes
-  public :: on_the_fly
+  public :: process_trajectory
   !-----------------------------
   integer, public :: group_count
   public :: get_groups
@@ -49,112 +61,180 @@ contains
     class(frame), intent(inout) :: me
     integer, intent(in) :: unit 
     ! local variables
-    integer       :: n
+    integer       :: n, ios
     integer       :: natoms
 
-    read(unit,*) 
-    read(unit,*) natoms
+    read(unit,*,iostat=ios) 
+    if (ios /= 0) call fail('error reading frame title')
+    read(unit,*,iostat=ios) natoms
+    if (ios /= 0) call fail('error reading number of atoms')
 
+    if(natoms <= 0) call fail('invalid number of atoms')
+    if (allocated(me%atoms)) deallocate(me%atoms)
     allocate(me%atoms(natoms))
 
     me%natoms = natoms
     
     do n = 1, me%natoms
-      read(unit,'(i5,2a5,i5,3f8.3)') &
-      &me%atoms(n)%index,me%atoms(n)%group,me%atoms(n)%sym,me%atoms(n)%seq,me%atoms(n)%xyz(:)
+      read(unit,'(i5,2a5,i5,3f8.3)',iostat=ios) &
+      me%atoms(n)%index,me%atoms(n)%group,&
+      me%atoms(n)%sym,me%atoms(n)%seq,&
+      me%atoms(n)%xyz(:)
     end do
 
-    read(unit,*) me%box(:)
+    read(unit,*,iostat=ios) me%box(:)
+    if (ios /= 0) call fail('error reading simuation box')
   end subroutine read_frame
 
-  subroutine get_groups(me,unit)
-    type(frame), intent(inout) :: me
-    integer, intent(in) :: unit
-    ! local variables
-    integer :: n, k, iter
-!    integer, allocatable :: na(:) ! atoms by group
-    real(wp) :: total_mass
-    real(wp) :: sx, sy, sz
-    real(wp) :: com(3)
-    character(5) :: Foo
-    integer :: nmax
-    real(wp) :: box(3)
+subroutine get_groups(me,unit)
 
-    integer :: lines
-    real(wp) :: minimal_image
+  type(frame), intent(inout) :: me
+  integer, intent(in) :: unit
 
+  ! Local variables
+  integer :: n, k
+  integer :: nmax, count_atoms
+  integer :: tmp_unit, ios
 
-    lines = 0
+  integer, allocatable :: group_id(:)
 
-    group_count = 0
+  real(wp) :: sx, sy, sz
+  real(wp) :: com(3)
+  real(wp) :: box(3)
+  real(wp) :: minimal_image
 
-    do n = 1, me%natoms
-       if(me%atoms(n)%index > group_count) then
-         group_count = me%atoms(n)%index
-       end if
-    end do
+  character(5) :: Foo
 
-    allocate(na(group_count))
+  ! Identify unique group indices
+  allocate(group_id(me%natoms))
 
-    ! compute the center of mass for each group
-    do k = 1, group_count
-       sx = 0.0_wp; sy = 0.0_wp; sz = 0.0_wp
-       total_mass = 0.0_wp
-       com(:) = 0.0_wp
-       iter = 0
+  group_count = 0
 
-       do n = 1, me%natoms
-          if(me%atoms(n)%index == k) then
-            sx = sx + me%atoms(n)%xyz(1)
-            sy = sy + me%atoms(n)%xyz(2)
-            sz = sz + me%atoms(n)%xyz(3)
-            total_mass = total_mass + 1.0_wp
-            Foo = me%atoms(n)%group
-            iter = iter + 1
-            na(k) = iter
-          end if
-       end do
+  do n = 1, me%natoms
 
-       com(1) = sx / total_mass
-       com(2) = sy / total_mass
-       com(3) = sz / total_mass
-
-       open(unit,status='scratch')
-       write(unit,*) Foo, com(1), com(2), com(3)
-       do n = 1, me%natoms
-         if(me%atoms(n)%index == k) then
-            write(unit,*) me%atoms(n)%sym, me%atoms(n)%xyz(:)-com(:)
-         end if
-       end do
-    end do
-
-    nmax = maxval(na)
-
-    allocate(molName(group_count),rx(group_count),ry(group_count),rz(group_count))
-    allocate(sym(group_count,nmax),x(group_count,nmax),y(group_count,nmax)&
-            &,z(group_count,nmax))
-    
-    
-    !!!@allocate(sites(nmax))
-
-    rewind(unit)
-    box(:) = me%box(:)
-
-    minimal_image = minval(box)
-    if(rcut > (minimal_image)/2.0_wp) then
-      write(*,'(a)') 'Check minimal image condition: rcut<= Lmin/2'
-      stop
+    if (.not. any(group_id(1:group_count) == me%atoms(n)%index)) then
+      group_count = group_count + 1
+      group_id(group_count) = me%atoms(n)%index
     end if
 
-    do k = 1, group_count
-       read(unit,*) molName(k), rx(k), ry(k), rz(k) 
-       do n = 1, na(k)
-         read(unit,*) sym(k,n), x(k,n), y(k,n), z(k,n) 
-       end do
+  end do
+
+  if (group_count == 0) call fail('no groups found')
+
+  ! Count atoms in each group
+  allocate(na(group_count))
+  na = 0
+
+  do k = 1, group_count
+    do n = 1, me%natoms
+
+      if (me%atoms(n)%index == group_id(k)) then
+        na(k) = na(k) + 1
+      end if
+
+    end do
+  end do
+
+  ! Open temporary file
+  open(newunit=tmp_unit, status='scratch', iostat=ios)
+  if (ios /= 0) call fail('cannot open temporary file')
+
+  ! Compute geometrical centers and relative coordinates
+  do k = 1, group_count
+
+    sx = 0.0_wp
+    sy = 0.0_wp
+    sz = 0.0_wp
+
+    count_atoms = 0
+
+    do n = 1, me%natoms
+
+      if (me%atoms(n)%index == group_id(k)) then
+
+        sx = sx + me%atoms(n)%xyz(1)
+        sy = sy + me%atoms(n)%xyz(2)
+        sz = sz + me%atoms(n)%xyz(3)
+
+        Foo = me%atoms(n)%group
+        count_atoms = count_atoms + 1
+
+      end if
+
     end do
 
-    close(unit)
-  end subroutine get_groups
+    if (count_atoms == 0) call fail('empty group detected')
+
+    com(1) = sx / real(count_atoms,wp)
+    com(2) = sy / real(count_atoms,wp)
+    com(3) = sz / real(count_atoms,wp)
+
+    write(tmp_unit,*,iostat=ios) Foo, com(:)
+    if (ios /= 0) call fail('error writing temporary group data')
+
+    do n = 1, me%natoms
+
+      if (me%atoms(n)%index == group_id(k)) then
+
+        write(tmp_unit,*,iostat=ios) me%atoms(n)%sym, &
+                                     me%atoms(n)%xyz(:)-com(:)
+
+        if (ios /= 0) call fail('error writing temporary atom data')
+
+      end if
+
+    end do
+
+  end do
+
+  ! Allocate group properties
+  nmax = maxval(na)
+
+  allocate(molName(group_count), rx(group_count), &
+           ry(group_count), rz(group_count))
+
+  allocate(sym(group_count,nmax), &
+           x(group_count,nmax), &
+           y(group_count,nmax), &
+           z(group_count,nmax))
+
+  ! Check minimum image condition
+  box(:) = me%box(:)
+
+  if (pbc == 'y') then
+
+    if (any(box <= 0.0_wp)) call fail('invalid simulation box')
+
+    minimal_image = minval(box)
+
+    if (rcut > minimal_image/2.0_wp) then
+      call fail('rcut violates the minimum image convention')
+    end if
+
+  end if
+
+  ! Read temporary data
+  rewind(tmp_unit)
+
+  do k = 1, group_count
+
+    read(tmp_unit,*,iostat=ios) molName(k), rx(k), ry(k), rz(k)
+    if (ios /= 0) call fail('error reading temporary group data')
+
+    do n = 1, na(k)
+
+      read(tmp_unit,*,iostat=ios) sym(k,n), x(k,n), y(k,n), z(k,n)
+      if (ios /= 0) call fail('error reading temporary atom data')
+
+    end do
+
+  end do
+
+  close(tmp_unit)
+
+  deallocate(group_id)
+
+end subroutine get_groups
 
 
   subroutine adjacency_pure(me,unit)
@@ -311,7 +391,7 @@ contains
   end subroutine getpbc
 
 !
-  subroutine on_the_fly(me,unit)
+  subroutine process_trajectory(me,unit)
     type(frame), intent(inout) :: me
     integer, intent(in) :: unit
     ! local variables
@@ -330,12 +410,10 @@ contains
     !---------------------------
 
     character(len=:), allocatable :: cmd
-    !cmd = 'python script.py '//trim(adjustl(measure))//' '//'measure'//' '//trim(adjustl(graph))
 
     show = 'n'
     lines = 0
 
-    !@write(*,*) 'flag = ', frequency
     do
        read(unit,'(a)',iostat=ios) buffer
        if(ios/=0) exit
@@ -348,8 +426,6 @@ contains
 
     nframes=lines/(natoms+3)
     rewind(unit)
-    
-    !unit2 = 10
 
     nf_cut = 0
     
@@ -366,7 +442,9 @@ contains
         unit2 = unit2+1
       end do
 
-      open(unit2,file='adjacency.csv',status='unknown')
+      write(ext,'(i10)') nf
+
+      open(unit2,file='adjacency_'//trim(adjustl(ext))//'.csv',status='unknown')
 
       call get_groups(me,unit1)
 
@@ -377,177 +455,19 @@ contains
       write(*,'("Time elapsed for building the adjacency matrix in frame&
              & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
       !-------------------------------
-      call cpu_time(time_start)
-      call build_script(nf)
-      call cpu_time(time_finish)
-      write(*,'("Building script - Time elapsed in frame&
-             & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
-
-      !@call execute_command_line('bin/python script.py output.png')
-      write(ext,'(i10)') nf
-
-      if(mod(nf,frequency) == 0 .or. frequency == -1) then
-        show = 'y'
-      else
-        show = 'n'
-      end if
-
-      cmd = 'time python script.py '//trim(adjustl(measure))//' '//'measure'//' '//&
-       &trim(adjustl(graph))//'_'//trim(adjustl(ext))//'.png'//' '//&
-       &trim(adjustl(active))//' '//trim(adjustl(show))
-        
-      write(*,*) '-----------------------------------------'
-      write(*,'("Networkx - Time elapsed in frame&
-             & ",i0)') nf
-      !@call cpu_time(time_start)
-      call execute_command_line(cmd)
-      !@call cpu_time(time_finish)
-      !@write(*,'("Networkx - Time elapsed in frame&
-      !@       & ",i0, ": "f6.3, " seconds")') nf, time_finish-time_start
-
       close(unit2)
       deallocate(me%atoms)
       deallocate(na)
       deallocate(molName,rx,ry,rz)
       deallocate(sym,x,y,z)
       deallocate(adj)
-      !!@deallocate(dss)
-      !@deallocate(sites)
 
       write(*,*) '-----------------------------------'
     end do
 
-  !@  if(mod(nframes,frequency)==0) then
-  !@     call analysis_interface(nf_cut)
-  !@  else
-       call analysis_interface(nf)
-  !@  end if
-
-  end subroutine on_the_fly
-
-!--------Analysis--------------------------------------  
-    subroutine analysis_interface(nf)
-      integer, intent(in) :: nf
-      character(len=:), allocatable :: results
-      character(len=:), allocatable :: input
-      integer :: n
-      character(5) :: Foo
-      integer :: unit1, unit2
-      integer :: ios
-      character(257) :: line
-      character(len=:), allocatable ::cmd
-
-      results = 'All_results.txt'
-
-      close(57)
-      open(unit=57,file=results,status='unknown')
-
-      do n = 1, nf-1
-        write(Foo,'(i5)') n
-        input = measure//"_"//trim(adjustl(Foo))//".txt"
-
-        close(56)
-        open(unit=56,file=input,status='old')
-       
-
-        do 
-          read(56,'(a)',iostat=ios) line
-          if(ios /= 0) exit
-          write(57,'(a)') trim(adjustl(line))
-        end do
-
-        close(56)
-      end do
-
-      do n = 1, nf-1
-        write(Foo,'(i5)') n
-        input = measure//"_"//trim(adjustl(Foo))//".txt"
-        cmd = "rm -r "//input
-
-       call execute_command_line(cmd)
-      end do
-
-      write(*,'(a)') "-------------------------"
-      write(*,'(a)') "COOR2GRAPH Version 1.0.0"
-      write(*,'(a)') ""
-      write(*,'(a)') measure//" of graph"
-      write(*,'(a)') "data save in:"
-      write(*,'(a)') "prefix_*.png"
-      write(*,'(a)') "histogram.png"
-      write(*,'(a)') "-------------------------"
+  end subroutine process_trajectory
 
 
-      ! ------------------------------------------------
-      close(93)
-      open(93,file='histogram.py',status='unknown')
-
-      write(93,'(a)')"import numpy as np"
-      write(93,'(a)')"import matplotlib.pyplot as plt"
-      write(93,'(a)')"import sys"
-      write(93,'(a)')"import os"
-      write(93,'(a)')""
-
-      write(93,'(a)')"file_name = 'All_results.txt'"
-      write(93,'(a)')"data = np.loadtxt(file_name, usecols=1)"
-      write(93,'(a)')""
-
-      write(93,'(a)')"average = np.mean(data)"
-      write(93,'(a)')"std_dev = np.std(data)"
-      write(93,'(a)')"print(f'Average: {average:.4f}')"
-      write(93,'(a)')"print(f'Standard Deviation: {std_dev:.4f}')"
-
-      write(93,'(a)')""
-!@      write(93,'(a)')"sys.stdout = open(os.devnull, 'w')"
-
-      write(93,'(a)')"data_size = len(data)"
-
-      write(93,'(a)')"bin_count=int(np.ceil(1 + np.log2(data_size)))"
-      write(93,'(a)')"hist, bin_edges = np.histogram(data, bins=bin_count)"
-      
-      write(93,'(a)')"print('Bin Start  Bin End  Frequency')"
-      write(93,'(a)')""
-
-      write(93,'(a)')"for start, end, freq in zip(bin_edges[:-1], bin_edges[1:], hist):"
-      write(93,'(a)')"    print(f'{start:10.4f} {end:10.4f} {freq:10d}')"
-      write(93,'(a)')""
-
-      write(93,'(a)')"plt.figure(figsize=(8,6))"
-      write(93,'(a)')"plt.hist(data, bins=bin_count, edgecolor='black', alpha=0.7)"
-      write(93,'(a)')"plt.title('Frequency of "//measure//"')"
-      write(93,'(a)')"plt.xlabel('Bins')"
-      write(93,'(a)')"plt.ylabel('Frequency')"
-      write(93,'(a)')"plt.grid(axis='y', linestyle='--', alpha=0.7)"
-      write(93,'(a)')"plt.tight_layout()"
-
-      write(93,'(a)')"plt.savefig('histogram.png')"
-      !@write(93,'(a)')"plt.show()"
-
-      cmd = "python histogram.py"
-      call execute_command_line(cmd)
-
-
-    end subroutine analysis_interface
-
-
-!--------user-defined functions ----------------------
-
-  subroutine pair_like(current_cutoff,sr2,check,sa,sb)
-    logical,intent(inout) :: check
-    logical,intent(inout) :: current_cutoff
-    real(wp),intent(in)   :: sr2
-    character(*),intent(in) :: sa, sb
-    check = .false.
-
-    current_cutoff = .false.
-    if(sa==pair(1) .and. sb==pair(2)) then
-      if(sr2<=distance*distance) then
-        current_cutoff = .true.
-!@        check = .true.
-      end if
-    end if
-  end subroutine pair_like
-
-!--------end user-defined functions--------------------
 
 end module frame_module
 
