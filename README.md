@@ -22,7 +22,10 @@ The software also supports periodic boundary conditions (PBC), allowing their ef
 - [ ] triad
 - [ ] 2D lattice
 - [ ] 3D lattice
-- [ ] Non-cubic pbc
+- [ ] non-cubic pbc
+- [ ] dipole moment
+- [ ] critical points
+- [ ] normal modes
 
 ## Requirements
 
